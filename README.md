@@ -17,7 +17,7 @@ MCP Server for managing context and chat history across conversations.
 Rememberly follows a clean, modular architecture inspired by best practices:
 
 ```
-rememberly/
+mcp_server/
 ├── interfaces/          # Abstract base classes for tools, resources, prompts
 │   ├── tool.py         # Tool interface and response models
 │   ├── resource.py     # Resource interface
@@ -100,15 +100,15 @@ Add to your `claude_desktop_config.json`:
 
 ```
 rememberly/
-├── rememberly/              # Main package
+├── mcp_server/             # Main MCP server package
 │   ├── __init__.py
 │   ├── _version.py
-│   ├── server.py           # MCP server entry point
-│   ├── interfaces/         # Abstract base classes
-│   ├── services/           # Service layer
-│   └── tools/              # Tool implementations
-├── chat.py                 # Local testing script
-├── pyproject.toml          # Project configuration
+│   ├── server.py          # MCP server entry point
+│   ├── interfaces/        # Abstract base classes
+│   ├── services/          # Service layer
+│   └── tools/             # Tool implementations
+├── chat.py                # Local testing script
+├── pyproject.toml         # Project configuration
 └── README.md
 ```
 
@@ -116,13 +116,13 @@ rememberly/
 
 1. Create a new directory under `tools/`:
    ```bash
-   mkdir -p rememberly/tools/my_tool
+   mkdir -p mcp_server/tools/my_tool
    ```
 
 2. Create `models.py` with Pydantic input/output models:
    ```python
    from pydantic import BaseModel, Field
-   from rememberly.interfaces.tool import BaseToolInput
+   from mcp_server.interfaces.tool import BaseToolInput
 
    class MyToolInput(BaseToolInput):
        query: str = Field(description="Query parameter")
@@ -133,7 +133,7 @@ rememberly/
 
 3. Create `my_tool.py` implementing the `Tool` interface:
    ```python
-   from rememberly.interfaces.tool import Tool, ToolResponse
+   from mcp_server.interfaces.tool import Tool, ToolResponse
    from .models import MyToolInput, MyToolOutput
 
    class MyTool(Tool):
@@ -150,7 +150,7 @@ rememberly/
 
 4. Register in `server.py`:
    ```python
-   from rememberly.tools.my_tool import MyTool
+   from mcp_server.tools.my_tool import MyTool
 
    tool_service.register_tools([
        MyTool(),
