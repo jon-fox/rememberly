@@ -31,33 +31,18 @@ jobs:
           role-to-assume: ${{ vars.AWS_DEV_GITHUB_ACTION_ROLE }}
           aws-region: us-east-1
 
-      - name: Get S3 bucket name from Terraform outputs
-        id: bucket
-        run: |
-          cd infra
-          terraform init -backend-config=backend.tfvars
-          BUCKET_NAME=$(terraform output -raw s3_website_bucket_name)
-          echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
-
       - name: Sync UI files to S3
         run: |
-          aws s3 sync ui/ s3://${{ steps.bucket.outputs.bucket_name }}/ \
+          aws s3 sync ui/ s3://${{ vars.S3_WEBSITE_BUCKET_NAME }}/ \
             --delete \
             --exclude ".git/*" \
             --exclude ".DS_Store" \
             --cache-control "public, max-age=3600"
 
-      - name: Get CloudFront distribution ID
-        id: cloudfront
-        run: |
-          cd infra
-          DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
-          echo "distribution_id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
-
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ steps.cloudfront.outputs.distribution_id }} \
+            --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
 
       - name: Deployment complete
