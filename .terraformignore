@@ -1,7 +1,7 @@
 # .terraformignore - Specifies files to ignore when uploading modules or using remote operations
 
 # Terraform directories
-.terraform/
+**/.terraform/**
 .terraform.lock.hcl
 
 # Git files
