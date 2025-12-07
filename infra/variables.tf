@@ -9,3 +9,9 @@ variable "aws_region" {
     type        = string
     default     = "us-east-1"
 }
+
+variable "mcp_lambda_image_uri" {
+    description = "ECR image URI for the MCP Lambda function"
+    type        = string
+    default     = "381492150662.dkr.ecr.us-east-1.amazonaws.com/app-ecr-repo:latest"
+}
