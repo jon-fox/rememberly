@@ -1,13 +1,6 @@
 name: Build and Deploy MCP Lambda
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'mcp_server/**'
-      - 'infra/mcp.tf'
-      - '.github/workflows/deploy-mcp.yml'
   workflow_dispatch:
 
 permissions:
