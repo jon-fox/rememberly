@@ -151,10 +151,19 @@ resource "aws_bedrockagentcore_gateway" "mcp" {
   }
 }
 
-# Gateway target pointing to Lambda
+# Gateway target pointing to Lambda with API key authentication
 resource "aws_bedrockagentcore_gateway_target" "mcp_lambda" {
   name               = "mcp-lambda-target"
   gateway_identifier = aws_bedrockagentcore_gateway.mcp.gateway_id
+  description        = "MCP server target with API key authentication"
+
+  credential_provider_configuration {
+    api_key {
+      provider_arn              = aws_lambda_function.mcp_authorizer.arn
+      credential_location       = "HEADER"
+      credential_parameter_name = "X-API-Key"
+    }
+  }
 
   target_configuration {
     mcp {

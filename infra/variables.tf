@@ -15,3 +15,9 @@ variable "mcp_lambda_image_uri" {
     type        = string
     default     = "381492150662.dkr.ecr.us-east-1.amazonaws.com/app-ecr-repo:latest"
 }
+
+variable "authorizer_lambda_image_uri" {
+    description = "ECR image URI for the Lambda authorizer function"
+    type        = string
+    default     = "381492150662.dkr.ecr.us-east-1.amazonaws.com/app-ecr-repo:authorizer-latest"
+}
