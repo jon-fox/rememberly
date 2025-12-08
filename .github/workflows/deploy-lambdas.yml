@@ -1,4 +1,4 @@
-name: Build and Deploy MCP Lambdas
+name: Build and Deploy MCP Lambda
 
 on:
   workflow_dispatch:
@@ -42,14 +42,6 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image_uri=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-          
-          # Build and push authorizer image
-          cd ../infra/authorizer_lambda
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:authorizer-$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:authorizer-$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:authorizer-latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:authorizer-$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:authorizer-latest
-          echo "authorizer_image_uri=$ECR_REGISTRY/$ECR_REPOSITORY:authorizer-$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -66,7 +58,6 @@ jobs:
           cd infra
           terraform plan \
             -var="mcp_lambda_image_uri=${{ steps.build-image.outputs.image_uri }}" \
-            -var="authorizer_lambda_image_uri=${{ steps.build-image.outputs.authorizer_image_uri }}" \
             -out=tfplan
 
       - name: Terraform Apply
@@ -82,15 +73,8 @@ jobs:
           aws lambda update-function-code \
             --function-name $FUNCTION_NAME \
             --image-uri ${{ steps.build-image.outputs.image_uri }} || true
-          
-          # Update authorizer Lambda
-          AUTHORIZER_FUNCTION_NAME="rememberly-mcp-authorizer"
-          aws lambda update-function-code \
-            --function-name $AUTHORIZER_FUNCTION_NAME \
-            --image-uri ${{ steps.build-image.outputs.authorizer_image_uri }} || true
 
       - name: Deployment complete
         run: |
-          echo "MCP Lambdas deployed successfully!"
+          echo "MCP Lambda deployed successfully!"
           echo "MCP Server Image: ${{ steps.build-image.outputs.image_uri }}"
-          echo "Authorizer Image: ${{ steps.build-image.outputs.authorizer_image_uri }}"
