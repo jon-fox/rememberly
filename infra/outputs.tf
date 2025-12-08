@@ -52,9 +52,9 @@ output "route53_name_servers" {
 }
 
 # MCP API outputs
-output "api_gateway_url" {
-  description = "URL of the MCP HTTP API Gateway"
-  value       = aws_apigatewayv2_stage.prod.invoke_url
+output "mcp_endpoint" {
+  description = "MCP API endpoint URL"
+  value       = "https://${local.mcp_domain}/mcp"
 }
 
 output "mcp_lambda_function_name" {
@@ -74,14 +74,14 @@ output "supabase_project_id" {
 }
 
 # ACM Certificate outputs
-output "acm_certificate_arn" {
-  description = "ARN of the ACM certificate"
+output "cloudfront_certificate_arn" {
+  description = "ARN of the ACM certificate for CloudFront"
   value       = aws_acm_certificate.main.arn
 }
 
-output "acm_certificate_status" {
-  description = "Status of the ACM certificate"
-  value       = aws_acm_certificate.main.status
+output "mcp_certificate_arn" {
+  description = "ARN of the ACM certificate for MCP API Gateway"
+  value       = aws_acm_certificate.mcp.arn
 }
 
 # Website URLs
@@ -93,15 +93,4 @@ output "website_url" {
 output "www_website_url" {
   description = "WWW website URL"
   value       = "https://${local.www_domain}"
-}
-
-# Deployment information
-output "cloudfront_invalidation_command" {
-  description = "AWS CLI command to invalidate CloudFront cache"
-  value       = "aws cloudfront create-invalidation --distribution-id ${aws_cloudfront_distribution.main.id} --paths '/*'"
-}
-
-output "s3_sync_command" {
-  description = "AWS CLI command to sync files to S3"
-  value       = "aws s3 sync ./dist s3://${aws_s3_bucket.website.id} --delete"
 }

@@ -27,9 +27,9 @@ resource "aws_iam_role" "mcp_lambda" {
   }
 }
 
-# Lambda policy for S3 access to storage bucket
-resource "aws_iam_role_policy" "mcp_lambda_s3" {
-  name = "mcp-lambda-s3-access"
+# Lambda policy for S3 and DynamoDB access
+resource "aws_iam_role_policy" "mcp_lambda_storage" {
+  name = "mcp-lambda-storage-access"
   role = aws_iam_role.mcp_lambda.id
 
   policy = jsonencode({
@@ -46,6 +46,21 @@ resource "aws_iam_role_policy" "mcp_lambda_s3" {
         Resource = [
           aws_s3_bucket.storage.arn,
           "${aws_s3_bucket.storage.arn}/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ]
+        Resource = [
+          aws_dynamodb_table.metadata.arn,
+          "${aws_dynamodb_table.metadata.arn}/index/*"
         ]
       }
     ]
@@ -70,8 +85,10 @@ resource "aws_lambda_function" "mcp_server" {
 
   environment {
     variables = {
-      STORAGE_BUCKET = aws_s3_bucket.storage.id
-      ENVIRONMENT    = var.environment
+      STORAGE_BUCKET    = aws_s3_bucket.storage.id
+      DYNAMODB_TABLE    = aws_dynamodb_table.metadata.name
+      SUPABASE_URL      = local.supabase_url
+      ENVIRONMENT       = var.environment
     }
   }
 

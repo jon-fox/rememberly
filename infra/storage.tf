@@ -52,36 +52,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "storage" {
   }
 }
 
-# Storage bucket lifecycle policy
-resource "aws_s3_bucket_lifecycle_configuration" "storage" {
-  bucket = aws_s3_bucket.storage.id
-
-  rule {
-    id     = "transition-to-ia"
-    status = "Enabled"
-
-    transition {
-      days          = 120
-      storage_class = "STANDARD_IA"
-    }
-
-    transition {
-      days          = 240
-      storage_class = "GLACIER_IR"
-    }
-  }
-
-  rule {
-    id     = "delete-old-versions"
-    status = "Enabled"
-
-    noncurrent_version_expiration {
-      noncurrent_days = 30
-    }
-  }
-}
-
-# DynamoDB table for metadata storage
+# DynamoDB table for MCP memory/context metadata
 resource "aws_dynamodb_table" "metadata" {
   name           = "rememberly-metadata-${var.environment}"
   billing_mode   = "PAY_PER_REQUEST"

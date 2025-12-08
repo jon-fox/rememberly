@@ -7,8 +7,8 @@ resource "aws_apigatewayv2_api" "mcp" {
   description   = "MCP HTTP API with Supabase JWT authentication"
 
   cors_configuration {
-    allow_origins = ["https://${local.domain_name}", "http://localhost:3000"]
-    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_origins = ["https://${local.domain_name}", "https://${local.www_domain}", "http://localhost:3000"]
+    allow_methods = ["GET", "POST", "OPTIONS"]
     allow_headers = ["content-type", "authorization"]
     max_age       = 300
   }
@@ -41,10 +41,22 @@ resource "aws_apigatewayv2_integration" "lambda" {
   payload_format_version = "2.0"
 }
 
-# Route with JWT authorization
-resource "aws_apigatewayv2_route" "mcp" {
+# Route for MCP endpoint - handles JSON-RPC requests
+# MCP clients POST JSON-RPC messages to /mcp with method field specifying the tool/resource/prompt
+resource "aws_apigatewayv2_route" "mcp_post" {
   api_id    = aws_apigatewayv2_api.mcp.id
-  route_key = "ANY /mcp/{proxy+}"
+  route_key = "POST /mcp"
+  
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# Route for SSE stream - allows MCP clients to receive server-initiated messages
+# Optional GET endpoint for Server-Sent Events if needed
+resource "aws_apigatewayv2_route" "mcp_get" {
+  api_id    = aws_apigatewayv2_api.mcp.id
+  route_key = "GET /mcp"
   
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
@@ -99,4 +111,30 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
     Environment = var.environment
     Project     = "rememberly"
   }
+}
+
+# Custom domain for MCP API Gateway
+resource "aws_apigatewayv2_domain_name" "mcp" {
+  domain_name = local.mcp_domain
+
+  domain_name_configuration {
+    certificate_arn = aws_acm_certificate.mcp.arn
+    endpoint_type   = "REGIONAL"
+    security_policy = "TLS_1_2"
+  }
+
+  depends_on = [aws_acm_certificate_validation.mcp]
+
+  tags = {
+    Name        = local.mcp_domain
+    Environment = var.environment
+    Project     = "rememberly"
+  }
+}
+
+# API Gateway mapping to custom domain
+resource "aws_apigatewayv2_api_mapping" "mcp" {
+  api_id      = aws_apigatewayv2_api.mcp.id
+  domain_name = aws_apigatewayv2_domain_name.mcp.id
+  stage       = aws_apigatewayv2_stage.prod.id
 }
