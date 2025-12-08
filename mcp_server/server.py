@@ -46,5 +46,9 @@ tool_service.register_tools(
 # Register tools with MCP
 tool_service.register_mcp_handlers(mcp)
 
+# Export the mcp instance for use by the Lambda handler
+__all__ = ["mcp"]
+
 if __name__ == "__main__":
+    # Local development/testing with stdio transport
     mcp.run(transport="stdio")

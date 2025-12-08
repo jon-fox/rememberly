@@ -15,4 +15,4 @@ RUN uv sync --frozen --no-dev
 COPY . ${LAMBDA_TASK_ROOT}/
 
 # Set the CMD to your handler
-CMD ["server.handler"]
+CMD ["main.handler"]
