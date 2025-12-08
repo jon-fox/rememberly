@@ -4,7 +4,7 @@ from typing import Dict, List, Any
 import logging
 import inspect
 from fastmcp import FastMCP
-from mcp_server.interfaces.prompt import Prompt, PromptResponse, PromptContent
+from interfaces.prompt import Prompt, PromptResponse, PromptContent
 
 
 class PromptService:

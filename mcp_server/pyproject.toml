@@ -28,7 +28,7 @@ dev = [
 ]
 
 [project.scripts]
-rememberly = "mcp_server.server:mcp.run"
+rememberly = "server:mcp.run"
 
 [build-system]
 requires = ["hatchling"]

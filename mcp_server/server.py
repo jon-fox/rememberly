@@ -2,8 +2,8 @@
 
 from fastmcp import FastMCP
 
-from mcp_server.services.tool_service import ToolService
-from mcp_server.tools.example_memory import ExampleMemoryTool
+from services.tool_service import ToolService
+from tools.example_memory import ExampleMemoryTool
 
 mcp = FastMCP(
     "Rememberly",

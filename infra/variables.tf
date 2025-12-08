@@ -16,6 +16,12 @@ variable "mcp_lambda_image_uri" {
     default     = "381492150662.dkr.ecr.us-east-1.amazonaws.com/app-ecr-repo:latest"
 }
 
+variable "mcp_image_version" {
+    description = "Version identifier for MCP image - change this to force Lambda to pull new image"
+    type        = string
+    default     = "1"
+}
+
 variable "supabase_anon_key" {
     description = "Supabase anonymous (public) API key"
     type        = string

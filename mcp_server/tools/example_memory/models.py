@@ -3,7 +3,7 @@
 from typing import Dict, Any
 from pydantic import BaseModel, Field, ConfigDict
 
-from mcp_server.interfaces.tool import BaseToolInput
+from interfaces.tool import BaseToolInput
 
 
 class ExampleMemoryInput(BaseToolInput):

@@ -122,7 +122,7 @@ rememberly/
 2. Create `models.py` with Pydantic input/output models:
    ```python
    from pydantic import BaseModel, Field
-   from mcp_server.interfaces.tool import BaseToolInput
+   from interfaces.tool import BaseToolInput
 
    class MyToolInput(BaseToolInput):
        query: str = Field(description="Query parameter")
@@ -133,7 +133,7 @@ rememberly/
 
 3. Create `my_tool.py` implementing the `Tool` interface:
    ```python
-   from mcp_server.interfaces.tool import Tool, ToolResponse
+   from interfaces.tool import Tool, ToolResponse
    from .models import MyToolInput, MyToolOutput
 
    class MyTool(Tool):
@@ -150,7 +150,7 @@ rememberly/
 
 4. Register in `server.py`:
    ```python
-   from mcp_server.tools.my_tool import MyTool
+   from tools.my_tool import MyTool
 
    tool_service.register_tools([
        MyTool(),

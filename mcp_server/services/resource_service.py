@@ -4,7 +4,7 @@ from typing import Dict, List
 import re
 import inspect
 from fastmcp import FastMCP
-from mcp_server.interfaces.resource import Resource, ResourceResponse
+from interfaces.resource import Resource, ResourceResponse
 
 
 class ResourceService:

@@ -2,7 +2,7 @@
 
 from typing import Dict, Any
 
-from mcp_server.interfaces.tool import Tool, ToolResponse
+from interfaces.tool import Tool, ToolResponse
 from .models import ExampleMemoryInput, ExampleMemoryOutput
 
 

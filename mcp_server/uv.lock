@@ -2,12 +2,6 @@ version = 1
 revision = 3
 requires-python = ">=3.12"
 
-[manifest]
-members = [
-    "mcp-server",
-    "rememberly",
-]
-
 [[package]]
 name = "ag-ui-protocol"
 version = "0.1.10"
@@ -1157,17 +1151,6 @@ wheels = [
 ]
 
 [[package]]
-name = "mcp-server"
-version = "0.1.0"
-source = { virtual = "mcp_server" }
-dependencies = [
-    { name = "fastmcp" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "fastmcp", specifier = ">=2.13.3" }]
-
-[[package]]
 name = "mdurl"
 version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2157,6 +2140,7 @@ wheels = [
 
 [[package]]
 name = "rememberly"
+version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "anysqlite" },
