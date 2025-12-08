@@ -51,6 +51,28 @@ output "route53_name_servers" {
   value       = aws_route53_zone.main.name_servers
 }
 
+# MCP API outputs
+output "api_gateway_url" {
+  description = "URL of the MCP HTTP API Gateway"
+  value       = aws_apigatewayv2_stage.prod.invoke_url
+}
+
+output "mcp_lambda_function_name" {
+  description = "Name of the MCP Lambda function"
+  value       = aws_lambda_function.mcp_server.function_name
+}
+
+# Supabase outputs
+output "supabase_url" {
+  description = "Supabase project URL"
+  value       = local.supabase_url
+}
+
+output "supabase_project_id" {
+  description = "Supabase project ID"
+  value       = local.supabase_project_id
+}
+
 # ACM Certificate outputs
 output "acm_certificate_arn" {
   description = "ARN of the ACM certificate"
