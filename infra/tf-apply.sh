@@ -27,6 +27,12 @@ export AWS_SESSION_TOKEN
 
 echo "Credentials exported. Running terraform apply..."
 
+# Auto-increment mcp_image_version
+CURRENT_VERSION=$(grep "mcp_image_version" terraform.tfvars | grep -o '[0-9]*')
+NEW_VERSION=$((CURRENT_VERSION + 1))
+sed -i.bak "s/mcp_image_version = \"$CURRENT_VERSION\"/mcp_image_version = \"$NEW_VERSION\"/" terraform.tfvars
+echo "Incremented mcp_image_version from $CURRENT_VERSION to $NEW_VERSION"
+
 # Run terraform with tfvars file
 cd "$(dirname "$0")"
 terraform apply -var-file="terraform.tfvars" "$@"

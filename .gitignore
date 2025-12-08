@@ -60,6 +60,7 @@ test_integration/
 *.tfstate
 *.tfstate.*
 *.tfvars
+*.tfvars.bak
 *.tfvars.json
 override.tf
 override.tf.json
