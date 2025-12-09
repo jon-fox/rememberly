@@ -2,6 +2,12 @@ name: Build and Deploy MCP Lambda
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'mcp_server/**'
+      - '.github/workflows/deploy-lambdas.yml'
 
 permissions:
   id-token: write
