@@ -61,7 +61,8 @@ def get_available_tools() -> List[Tool]:
 def create_mcp_server() -> FastMCP:
     """Create and configure the MCP server."""
     logger.info("Creating MCP server instance")
-    mcp = FastMCP("example-mcp-server")
+    # Enable stateless_http for Lambda deployment to handle multiple invocations
+    mcp = FastMCP("example-mcp-server", stateless_http=True)
     tool_service = ToolService()
     # resource_service = ResourceService()
 
