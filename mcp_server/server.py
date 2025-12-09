@@ -96,3 +96,7 @@ def create_http_app():
     )
 
     return app
+
+
+# Export app for uvicorn (used by Lambda Web Adapter)
+app = create_http_app()
