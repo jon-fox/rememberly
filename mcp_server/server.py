@@ -2,6 +2,8 @@
 
 from fastmcp import FastMCP
 
+from typing import List
+from interfaces.tool import Tool
 from services.tool_service import ToolService
 from tools.example_memory import ExampleMemoryTool
 from starlette.middleware.cors import CORSMiddleware
