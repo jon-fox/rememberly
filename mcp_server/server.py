@@ -4,8 +4,11 @@ from fastmcp import FastMCP
 
 from typing import List
 from interfaces.tool import Tool
+from interfaces.resource import Resource
 from services.tool_service import ToolService
-from tools.example_memory import ExampleMemoryTool
+from services.resource_service import ResourceService
+from tools import GetMemoryTool, PutMemoryTool
+from resources import DateTimeResource
 from starlette.middleware.cors import CORSMiddleware
 import logging
 
@@ -47,15 +50,21 @@ def get_available_tools() -> List[Tool]:
     """Get list of all available tools."""
     logger.info("Initializing available tools")
     tools = [
-        ExampleMemoryTool(),
+        GetMemoryTool(),
+        PutMemoryTool(),
     ]
     logger.info(f"Successfully initialized {len(tools)} tools")
     return tools
 
 
-# def get_available_resources() -> List[Resource]:
-#     """Get list of all available resources."""
-#     return []
+def get_available_resources() -> List[Resource]:
+    """Get list of all available resources."""
+    logger.info("Initializing available resources")
+    resources = [
+        DateTimeResource(),
+    ]
+    logger.info(f"Successfully initialized {len(resources)} resources")
+    return resources
 
 
 def create_mcp_server() -> FastMCP:
@@ -64,7 +73,7 @@ def create_mcp_server() -> FastMCP:
     # Enable stateless_http for Lambda deployment to handle multiple invocations
     mcp = FastMCP("example-mcp-server", stateless_http=True)
     tool_service = ToolService()
-    # resource_service = ResourceService()
+    resource_service = ResourceService()
 
     # Register all tools and their MCP handlers
     logger.info("Registering tools and MCP handlers")
@@ -73,8 +82,8 @@ def create_mcp_server() -> FastMCP:
 
     # Register all resources and their MCP handlers
     logger.info("Registering resources and MCP handlers")
-    # resource_service.register_resources(get_available_resources())
-    # resource_service.register_mcp_handlers(mcp)
+    resource_service.register_resources(get_available_resources())
+    resource_service.register_mcp_handlers(mcp)
 
     logger.info("MCP server configuration completed successfully")
     return mcp
