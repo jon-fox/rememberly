@@ -7,7 +7,7 @@ from interfaces.tool import Tool
 from interfaces.resource import Resource
 from services.tool_service import ToolService
 from services.resource_service import ResourceService
-from tools import GetMemoryTool, PutMemoryTool
+from tools import GetMemoryTool, PutMemoryTool, ListMemoriesTool
 from resources import DateTimeResource
 from starlette.middleware.cors import CORSMiddleware
 import logging
@@ -52,6 +52,7 @@ def get_available_tools() -> List[Tool]:
     tools = [
         GetMemoryTool(),
         PutMemoryTool(),
+        ListMemoriesTool(),
     ]
     logger.info(f"Successfully initialized {len(tools)} tools")
     return tools

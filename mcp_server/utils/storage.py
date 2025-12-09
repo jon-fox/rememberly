@@ -7,7 +7,7 @@ class MemoryStorage:
     """Shared in-memory storage for memory tools.
     
     In production, this would be replaced with a database or cache service.
-    This class ensures that GetMemoryTool and PutMemoryTool share the same storage.
+    This class ensures that GetMemoryTool, PutMemoryTool, and ListMemoriesTool share the same storage.
     """
 
     def __init__(self):
@@ -36,6 +36,10 @@ class MemoryStorage:
     def clear(self) -> None:
         """Clear all memory items."""
         self._storage.clear()
+    
+    def keys(self) -> list[str]:
+        """Get all storage keys."""
+        return list(self._storage.keys())
 
 
 # Global storage instance shared by all memory tools
