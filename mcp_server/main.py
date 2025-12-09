@@ -1,7 +1,8 @@
 """Lambda handler entry point for Rememberly MCP Server."""
 
 from mangum import Mangum
-from server import mcp
+from server import create_http_app
 
 # Create the Lambda handler using Mangum to wrap the FastMCP ASGI app
-handler = Mangum(mcp._app, lifespan="off")
+app = create_http_app()
+handler = Mangum(app, lifespan="off")
