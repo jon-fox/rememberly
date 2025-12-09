@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
     "Rememberly",
-    dependencies=["fastmcp", "pydantic"],
     instructions="""
     Use this MCP server for managing context and chat history, including:
     - Storing and retrieving conversation context
