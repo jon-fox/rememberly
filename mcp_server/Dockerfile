@@ -24,5 +24,8 @@ COPY . ${LAMBDA_TASK_ROOT}/
 ENV PORT=8080
 ENV AWS_LWA_READINESS_CHECK_PATH=/
 
+# Override the Lambda entrypoint to run our web app directly
+ENTRYPOINT []
+
 # Start uvicorn directly - Lambda Web Adapter handles the rest
 CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
