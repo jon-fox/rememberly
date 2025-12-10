@@ -1,8 +1,40 @@
 """Service layer for managing tools."""
 
 from typing import Dict, List, Any
+from functools import wraps
+from contextvars import ContextVar
 from fastmcp import FastMCP
 from interfaces.tool import Tool, ToolResponse, ToolContent
+from models import UserContext
+
+# Context variable to store user context across async calls
+_user_context: ContextVar[UserContext] = ContextVar("user_context", default=None)
+
+
+def get_user_context() -> UserContext:
+    """Get the current user context."""
+    ctx = _user_context.get()
+    return ctx if ctx else UserContext()
+
+
+def set_user_context(user_context: UserContext) -> None:
+    """Set the current user context."""
+    _user_context.set(user_context)
+
+
+def require_auth(func):
+    """Decorator to require authenticated user for tool execution."""
+
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        user_context = get_user_context()
+        if not user_context.is_authenticated:
+            return ToolResponse.from_text(
+                "Error: Authentication required. User not validated."
+            )
+        return await func(*args, **kwargs)
+
+    return wrapper
 
 
 class ToolService:
@@ -92,10 +124,9 @@ class ToolService:
     def register_mcp_handlers(self, mcp: FastMCP) -> None:
         """Register all tools as MCP handlers."""
         for tool in self._tools.values():
-            # Create a handler that uses the tool's input model directly for schema generation
+
             def create_handler(tool_instance):
-                # Use the actual Pydantic model as the function parameter
-                # This ensures FastMCP gets the complete schema including nested objects
+                @require_auth
                 async def handler(input_data: tool_instance.input_model):
                     f'"""{tool_instance.description}"""'
                     result = await self.execute_tool(
@@ -105,8 +136,5 @@ class ToolService:
 
                 return handler
 
-            # Create the handler
             handler = create_handler(tool)
-
-            # Register with FastMCP - it should auto-detect the schema from the type annotation
             mcp.tool(name=tool.name, description=tool.description)(handler)
