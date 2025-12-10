@@ -30,7 +30,7 @@ def require_auth(func):
         user_context = get_user_context()
         if not user_context.is_authenticated:
             return ToolResponse.from_text(
-                "Error: Authentication required. User not validated."
+                "Error: Authentication required. User does not exist or is not validated."
             )
         return await func(*args, **kwargs)
 
