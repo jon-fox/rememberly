@@ -102,8 +102,4 @@ class ListMemoriesTool(Tool):
             prefix_filter=input_data.prefix,
         )
 
-        return ToolResponse(
-            success=True,
-            result=output.model_dump(),
-            error=None,
-        )
+        return ToolResponse.from_model(output)
