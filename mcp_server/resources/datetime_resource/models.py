@@ -6,6 +6,7 @@ from interfaces.resource import BaseResourceInput
 
 class DateTimeInput(BaseResourceInput):
     """Input model for datetime resource - no parameters needed."""
+
     pass
 
 

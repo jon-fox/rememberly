@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 class MemoryStorage:
     """Shared in-memory storage for memory tools.
-    
+
     In production, this would be replaced with a database or cache service.
     This class ensures that GetMemoryTool, PutMemoryTool, and ListMemoriesTool share the same storage.
     """
@@ -36,7 +36,7 @@ class MemoryStorage:
     def clear(self) -> None:
         """Clear all memory items."""
         self._storage.clear()
-    
+
     def keys(self) -> list[str]:
         """Get all storage keys."""
         return list(self._storage.keys())

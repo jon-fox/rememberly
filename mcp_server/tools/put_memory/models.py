@@ -26,13 +26,16 @@ class PutMemoryInput(BaseToolInput):
     )
 
     key: str = Field(description="The key/identifier for storing the memory item")
-    value: Any = Field(description="The value to store (can be string, dict, list, etc.)")
+    value: Any = Field(
+        description="The value to store (can be string, dict, list, etc.)"
+    )
     namespace: Optional[str] = Field(
         default=None,
         description="Optional namespace to organize memories (e.g., user_id, session_id)",
     )
     tags: Optional[List[str]] = Field(
-        default=None, description="Optional tags for categorizing and searching memories"
+        default=None,
+        description="Optional tags for categorizing and searching memories",
     )
     ttl: Optional[int] = Field(
         default=None,

@@ -40,7 +40,11 @@ class ListMemoriesTool(Tool):
         return "default", storage_key
 
     def _matches_filters(
-        self, namespace: str, key: str, namespace_filter: str | None, prefix_filter: str | None
+        self,
+        namespace: str,
+        key: str,
+        namespace_filter: str | None,
+        prefix_filter: str | None,
     ) -> bool:
         """Check if a memory item matches the given filters."""
         if namespace_filter and namespace != namespace_filter:

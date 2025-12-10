@@ -22,9 +22,7 @@ class GetMemoryInput(BaseToolInput):
         }
     )
 
-    key: str = Field(
-        description="The key/identifier for the memory item to retrieve"
-    )
+    key: str = Field(description="The key/identifier for the memory item to retrieve")
     namespace: Optional[str] = Field(
         default=None,
         description="Optional namespace to organize memories (e.g., user_id, session_id)",

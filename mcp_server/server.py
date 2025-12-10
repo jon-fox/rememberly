@@ -10,7 +10,9 @@ from services.resource_service import ResourceService
 from tools import GetMemoryTool, PutMemoryTool, ListMemoriesTool
 from resources import DateTimeResource
 from starlette.middleware.cors import CORSMiddleware
+from middleware import AuthMiddleware
 import logging
+import os
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -91,14 +93,13 @@ def create_mcp_server() -> FastMCP:
 
 
 def create_http_app():
-    """Create a FastMCP HTTP app with CORS middleware."""
+    """Create a FastMCP HTTP app with CORS and Auth middleware."""
     mcp_server = create_mcp_server()
 
     app = mcp_server.http_app()  # type: ignore[attr-defined]
-
-    # Apply CORS middleware manually
-    app = CORSMiddleware(
-        app,
+    app.add_middleware(AuthMiddleware)
+    app.add_middleware(
+        CORSMiddleware,
         allow_origins=["*"],
         allow_methods=["*"],
         allow_headers=["*"],

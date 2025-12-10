@@ -67,9 +67,7 @@ class PutMemoryTool(Tool):
 
         if input_data.ttl:
             memory_data["metadata"]["ttl"] = input_data.ttl
-            memory_data["metadata"]["expires_at"] = (
-                now.timestamp() + input_data.ttl
-            )
+            memory_data["metadata"]["expires_at"] = now.timestamp() + input_data.ttl
 
         self._storage.put(storage_key, memory_data)
 
