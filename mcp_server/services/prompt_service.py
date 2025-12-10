@@ -1,7 +1,6 @@
 """Service layer for managing prompts."""
 
 from typing import Dict, List, Any
-import logging
 import inspect
 from fastmcp import FastMCP
 from interfaces.prompt import Prompt, PromptResponse, PromptContent

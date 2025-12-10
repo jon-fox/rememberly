@@ -12,7 +12,6 @@ from resources import DateTimeResource
 from starlette.middleware.cors import CORSMiddleware
 from middleware import AuthMiddleware
 import logging
-import os
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
