@@ -162,7 +162,7 @@ async function getAccessToken() {
 }
 
 // Redirect to login page if not authenticated
-async function requireAuth(redirectUrl = '/ui/login.html') {
+async function requireAuth(redirectUrl = 'login.html') {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
         window.location.href = redirectUrl;

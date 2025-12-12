@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data, error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/ui/index.html`
+                    redirectTo: `${window.location.origin}/index.html`
                 }
             });
             
@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data, error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'github',
                 options: {
-                    redirectTo: `${window.location.origin}/ui/index.html`
+                    redirectTo: `${window.location.origin}/index.html`
                 }
             });
             
@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/ui/reset-password.html`
+                redirectTo: `${window.location.origin}/reset-password.html`
             });
             
             if (error) throw error;
