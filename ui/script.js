@@ -1,22 +1,54 @@
-// Simple memory storage demo
+// Simple memory storage demo with authentication
 let memories = [];
+let currentUser = null;
 
 const memoryInput = document.getElementById('memoryInput');
 const saveButton = document.getElementById('saveButton');
 const memoryList = document.getElementById('memoryList');
+const userMenu = document.getElementById('userMenu');
+const userEmail = document.getElementById('userEmail');
+const signOutBtn = document.getElementById('signOutBtn');
 
-// Load memories from localStorage
+// Initialize authentication state
+async function initAuth() {
+    // Check if user is authenticated
+    const authenticated = await requireAuth();
+    
+    if (!authenticated) {
+        return; // Will redirect to login
+    }
+    
+    // Get current user
+    currentUser = await getCurrentUser();
+    
+    if (currentUser) {
+        // Show user menu
+        userMenu.style.display = 'flex';
+        userEmail.textContent = currentUser.email;
+        
+        // Load user-specific memories
+        loadMemories();
+    }
+}
+
+// Load memories from localStorage (user-specific)
 function loadMemories() {
-    const stored = localStorage.getItem('rememberly_memories');
+    if (!currentUser) return;
+    
+    const storageKey = `rememberly_memories_${currentUser.id}`;
+    const stored = localStorage.getItem(storageKey);
     if (stored) {
         memories = JSON.parse(stored);
         renderMemories();
     }
 }
 
-// Save memories to localStorage
+// Save memories to localStorage (user-specific)
 function saveMemories() {
-    localStorage.setItem('rememberly_memories', JSON.stringify(memories));
+    if (!currentUser) return;
+    
+    const storageKey = `rememberly_memories_${currentUser.id}`;
+    localStorage.setItem(storageKey, JSON.stringify(memories));
 }
 
 // Render memories to the page
@@ -63,6 +95,34 @@ function addMemory() {
     memoryInput.focus();
 }
 
+// Handle sign out
+async function handleSignOut() {
+    try {
+        await signOut();
+        // Redirect to login page
+        window.location.href = 'login.html';
+    } catch (error) {
+        console.error('Sign out error:', error);
+        alert('Failed to sign out. Please try again.');
+    }
+}
+
+// Listen for auth state changes
+onAuthStateChange((event, session) => {
+    console.log('Auth state changed:', event);
+    
+    if (event === 'SIGNED_OUT') {
+        window.location.href = 'login.html';
+    } else if (event === 'SIGNED_IN') {
+        currentUser = session?.user;
+        if (currentUser) {
+            userMenu.style.display = 'flex';
+            userEmail.textContent = currentUser.email;
+            loadMemories();
+        }
+    }
+});
+
 // Event listeners
 saveButton.addEventListener('click', addMemory);
 
@@ -72,5 +132,9 @@ memoryInput.addEventListener('keypress', (e) => {
     }
 });
 
+signOutBtn.addEventListener('click', handleSignOut);
+
 // Initialize
-loadMemories();
+document.addEventListener('DOMContentLoaded', () => {
+    initAuth();
+});
