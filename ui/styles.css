@@ -132,6 +132,7 @@ main {
     padding: 2rem;
     border-radius: 12px;
     border: 1px solid rgba(0, 255, 136, 0.15);
+    margin-bottom: 3rem;
 }
 
 .demo h2 {
@@ -139,6 +140,33 @@ main {
     color: #00ff88;
     margin-bottom: 1.5rem;
     font-weight: 600;
+}
+
+.subscription {
+    background: linear-gradient(145deg, #1f1f1f 0%, #151515 100%);
+    padding: 3rem;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    text-align: center;
+}
+
+.subscription h2 {
+    color: #00ff88;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    font-size: 2rem;
+}
+
+.subscription p {
+    color: #b0b0b0;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.stripe-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .demo-input {
