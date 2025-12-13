@@ -5,10 +5,13 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0a0a;
+    background-image: 
+        radial-gradient(at 20% 30%, rgba(0, 255, 136, 0.08) 0px, transparent 50%),
+        radial-gradient(at 80% 70%, rgba(0, 255, 136, 0.05) 0px, transparent 50%);
     min-height: 100vh;
-    color: #333;
+    color: #e0e0e0;
 }
 
 .container {
@@ -19,25 +22,33 @@ body {
 
 header {
     text-align: center;
-    color: white;
+    color: #00ff88;
     margin-bottom: 3rem;
+    text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
 }
 
 header h1 {
     font-size: 3rem;
     margin-bottom: 0.5rem;
+    font-weight: 700;
+    letter-spacing: -1px;
 }
 
 .tagline {
     font-size: 1.2rem;
-    opacity: 0.9;
+    opacity: 0.8;
+    color: #b0b0b0;
 }
 
 main {
-    background: white;
-    border-radius: 20px;
+    background: linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%);
+    border-radius: 16px;
     padding: 3rem;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 0 0 1px rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.1);
 }
 
 .hero {
@@ -47,30 +58,35 @@ main {
 
 .hero h2 {
     font-size: 2.5rem;
-    color: #667eea;
+    color: #00ff88;
     margin-bottom: 1rem;
+    font-weight: 700;
+    text-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
 }
 
 .hero p {
     font-size: 1.2rem;
-    color: #666;
+    color: #b0b0b0;
     margin-bottom: 2rem;
 }
 
 .cta-button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+    color: #000;
     border: none;
     padding: 1rem 3rem;
     font-size: 1.1rem;
-    border-radius: 50px;
+    font-weight: 600;
+    border-radius: 8px;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
 }
 
 .cta-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 30px rgba(0, 255, 136, 0.5);
+    background: linear-gradient(135deg, #00ffaa 0%, #00dd7a 100%);
 }
 
 .features {
@@ -83,13 +99,17 @@ main {
 .feature-card {
     text-align: center;
     padding: 2rem;
-    border-radius: 10px;
-    background: #f8f9ff;
-    transition: transform 0.2s;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #1f1f1f 0%, #151515 100%);
+    border: 1px solid rgba(0, 255, 136, 0.15);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .feature-card:hover {
     transform: translateY(-5px);
+    border-color: rgba(0, 255, 136, 0.4);
+    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.2);
 }
 
 .feature-icon {
@@ -98,24 +118,27 @@ main {
 }
 
 .feature-card h3 {
-    color: #667eea;
+    color: #00ff88;
     margin-bottom: 0.5rem;
+    font-weight: 600;
 }
 
 .feature-card p {
-    color: #666;
+    color: #999;
 }
 
 .demo {
-    background: #f8f9ff;
+    background: linear-gradient(145deg, #1f1f1f 0%, #151515 100%);
     padding: 2rem;
-    border-radius: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 136, 0.15);
 }
 
 .demo h2 {
     text-align: center;
-    color: #667eea;
+    color: #00ff88;
     margin-bottom: 1.5rem;
+    font-weight: 600;
 }
 
 .demo-input {
@@ -127,29 +150,37 @@ main {
 .demo-input input {
     flex: 1;
     padding: 1rem;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    background: #0a0a0a;
+    color: #e0e0e0;
+    border-radius: 8px;
     font-size: 1rem;
+    transition: all 0.3s ease;
 }
 
 .demo-input input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #00ff88;
+    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
 }
 
 .demo-input button {
-    background: #667eea;
-    color: white;
+    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+    color: #000;
     border: none;
     padding: 1rem 2rem;
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 1rem;
-    transition: background 0.2s;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
 }
 
 .demo-input button:hover {
-    background: #764ba2;
+    background: linear-gradient(135deg, #00ffaa 0%, #00dd7a 100%);
+    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+    transform: translateY(-2px);
 }
 
 .memory-list {
@@ -159,27 +190,36 @@ main {
 }
 
 .memory-item {
-    background: white;
+    background: linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%);
     padding: 1rem;
     border-radius: 8px;
-    border-left: 4px solid #667eea;
+    border-left: 3px solid #00ff88;
+    border: 1px solid rgba(0, 255, 136, 0.2);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: all 0.3s ease;
+}
+
+.memory-item:hover {
+    border-color: rgba(0, 255, 136, 0.4);
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.15);
+    transform: translateX(5px);
 }
 
 .memory-text {
     flex: 1;
+    color: #e0e0e0;
 }
 
 .memory-time {
     font-size: 0.85rem;
-    color: #999;
+    color: #666;
 }
 
 footer {
     text-align: center;
-    color: white;
+    color: #666;
     margin-top: 3rem;
     opacity: 0.8;
 }
@@ -194,10 +234,14 @@ footer {
 }
 
 .auth-box {
-    background: white;
-    border-radius: 20px;
+    background: linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%);
+    border-radius: 16px;
     padding: 3rem;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 0 0 1px rgba(0, 255, 136, 0.2);
+    border: 1px solid rgba(0, 255, 136, 0.2);
     max-width: 450px;
     width: 100%;
 }
@@ -208,13 +252,15 @@ footer {
 }
 
 .auth-header h1 {
-    color: #667eea;
+    color: #00ff88;
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
+    font-weight: 700;
+    text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
 }
 
 .auth-header .tagline {
-    color: #666;
+    color: #999;
     font-size: 1rem;
 }
 
@@ -227,13 +273,14 @@ footer {
 }
 
 .auth-form h2 {
-    color: #333;
+    color: #00ff88;
     margin-bottom: 0.5rem;
     font-size: 1.8rem;
+    font-weight: 600;
 }
 
 .form-subtitle {
-    color: #666;
+    color: #999;
     margin-bottom: 2rem;
     font-size: 0.95rem;
 }
@@ -244,7 +291,7 @@ footer {
 
 .form-group label {
     display: block;
-    color: #333;
+    color: #e0e0e0;
     font-weight: 500;
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
@@ -253,15 +300,18 @@ footer {
 .form-group input {
     width: 100%;
     padding: 0.75rem;
-    border: 2px solid #e0e0e0;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    background: #0a0a0a;
+    color: #e0e0e0;
     border-radius: 8px;
     font-size: 1rem;
-    transition: border-color 0.2s;
+    transition: all 0.3s ease;
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #00ff88;
+    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
 }
 
 .form-group small {
@@ -283,12 +333,13 @@ footer {
     align-items: center;
     gap: 0.5rem;
     font-size: 0.9rem;
-    color: #666;
+    color: #999;
     cursor: pointer;
 }
 
 .checkbox-label input[type="checkbox"] {
     cursor: pointer;
+    accent-color: #00ff88;
 }
 
 .checkbox-label.terms {
@@ -296,41 +347,45 @@ footer {
 }
 
 .checkbox-label a {
-    color: #667eea;
+    color: #00ff88;
     text-decoration: none;
 }
 
 .checkbox-label a:hover {
     text-decoration: underline;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
 .forgot-password {
-    color: #667eea;
+    color: #00ff88;
     text-decoration: none;
     font-size: 0.9rem;
 }
 
 .forgot-password:hover {
     text-decoration: underline;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
 .auth-button {
     width: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+    color: #000;
     border: none;
     padding: 0.9rem;
     font-size: 1rem;
     font-weight: 600;
     border-radius: 8px;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s ease;
     margin-bottom: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
 }
 
 .auth-button:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 30px rgba(0, 255, 136, 0.5);
+    background: linear-gradient(135deg, #00ffaa 0%, #00dd7a 100%);
 }
 
 .auth-button:disabled {
@@ -339,13 +394,14 @@ footer {
 }
 
 .error-message {
-    color: #e53e3e;
+    color: #ff6b6b;
     font-size: 0.9rem;
     margin-top: 0.5rem;
     padding: 0.75rem;
-    background: #fff5f5;
+    background: rgba(255, 107, 107, 0.1);
     border-radius: 6px;
-    border-left: 3px solid #e53e3e;
+    border-left: 3px solid #ff6b6b;
+    border: 1px solid rgba(255, 107, 107, 0.3);
     display: none;
 }
 
@@ -354,13 +410,14 @@ footer {
 }
 
 .success-message {
-    color: #38a169;
+    color: #00ff88;
     font-size: 0.9rem;
     margin-top: 0.5rem;
     padding: 0.75rem;
-    background: #f0fff4;
+    background: rgba(0, 255, 136, 0.1);
     border-radius: 6px;
-    border-left: 3px solid #38a169;
+    border-left: 3px solid #00ff88;
+    border: 1px solid rgba(0, 255, 136, 0.3);
     display: none;
 }
 
@@ -370,19 +427,20 @@ footer {
 
 .switch-form {
     text-align: center;
-    color: #666;
+    color: #999;
     font-size: 0.9rem;
     margin-top: 1.5rem;
 }
 
 .switch-form a {
-    color: #667eea;
+    color: #00ff88;
     text-decoration: none;
     font-weight: 600;
 }
 
 .switch-form a:hover {
     text-decoration: underline;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
 .oauth-section {
@@ -393,7 +451,7 @@ footer {
     display: flex;
     align-items: center;
     margin: 1.5rem 0;
-    color: #999;
+    color: #666;
     font-size: 0.85rem;
 }
 
@@ -402,7 +460,7 @@ footer {
     content: '';
     flex: 1;
     height: 1px;
-    background: #e0e0e0;
+    background: rgba(0, 255, 136, 0.2);
 }
 
 .divider span {
@@ -421,18 +479,20 @@ footer {
     justify-content: center;
     gap: 0.5rem;
     padding: 0.75rem;
-    border: 2px solid #e0e0e0;
-    background: white;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    background: #0a0a0a;
+    color: #e0e0e0;
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 500;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
 }
 
 .oauth-button:hover:not(:disabled) {
-    border-color: #667eea;
-    background: #f8f9ff;
+    border-color: rgba(0, 255, 136, 0.5);
+    background: #1a1a1a;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
 }
 
 .oauth-button:disabled {
@@ -441,11 +501,11 @@ footer {
 }
 
 .oauth-button.google {
-    color: #333;
+    color: #e0e0e0;
 }
 
 .oauth-button.github {
-    color: #333;
+    color: #e0e0e0;
 }
 
 /* Logos */
@@ -483,25 +543,27 @@ footer {
 }
 
 .user-email {
-    color: white;
+    color: #00ff88;
     font-size: 0.9rem;
     opacity: 0.9;
 }
 
 .sign-out-btn {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(0, 255, 136, 0.1);
+    color: #00ff88;
+    border: 1px solid rgba(0, 255, 136, 0.3);
     padding: 0.5rem 1rem;
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.9rem;
-    transition: all 0.2s;
+    font-weight: 500;
+    transition: all 0.3s ease;
 }
 
 .sign-out-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 255, 136, 0.2);
+    border-color: rgba(0, 255, 136, 0.5);
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
 }
 
 @media (max-width: 768px) {
