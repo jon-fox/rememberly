@@ -18,11 +18,20 @@ class GetMemoryInput(BaseToolInput):
                     "key": "conversation_context",
                     "namespace": "session_123",
                 },
+                {
+                    "key": "property_listing",
+                    "bucket": "real_estate",
+                    "namespace": "session_123",
+                },
             ]
         }
     )
 
     key: str = Field(description="The key/identifier for the memory item to retrieve")
+    bucket: str = Field(
+        default="default",
+        description="The bucket (container) to retrieve the memory from. Defaults to 'default'.",
+    )
     namespace: Optional[str] = Field(
         default=None,
         description="Optional namespace to organize memories (e.g., user_id, session_id)",

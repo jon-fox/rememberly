@@ -13,7 +13,8 @@ class GetMemoryTool(Tool):
     description = (
         "Retrieve a stored memory item by key. Use this to recall information, "
         "context, preferences, or conversation history that was previously stored. "
-        "Supports namespaces for organizing memories by user, session, or other categories."
+        "Supports buckets for organizing memories into collections (e.g., 'real_estate', 'personal') "
+        "and namespaces for organizing memories by user, session, or other categories."
     )
     input_model = GetMemoryInput
     output_model = GetMemoryOutput
@@ -31,11 +32,11 @@ class GetMemoryTool(Tool):
             "output": self.output_model.model_json_schema(),
         }
 
-    def _get_storage_key(self, key: str, namespace: str | None) -> str:
-        """Generate a storage key with namespace."""
+    def _get_storage_key(self, key: str, bucket: str, namespace: str | None) -> str:
+        """Generate a storage key with bucket and namespace."""
         if namespace:
-            return f"{namespace}:{key}"
-        return f"default:{key}"
+            return f"{bucket}:{namespace}:{key}"
+        return f"{bucket}:default:{key}"
 
     async def execute(self, input_data: GetMemoryInput) -> ToolResponse:
         """Execute the get memory tool.
@@ -46,7 +47,7 @@ class GetMemoryTool(Tool):
         Returns:
             A response containing the retrieved memory or indication it wasn't found
         """
-        storage_key = self._get_storage_key(input_data.key, input_data.namespace)
+        storage_key = self._get_storage_key(input_data.key, input_data.bucket, input_data.namespace)
 
         if self._storage.has(storage_key):
             memory_data = self._storage.get(storage_key)

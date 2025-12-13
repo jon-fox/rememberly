@@ -14,7 +14,8 @@ class PutMemoryTool(Tool):
     description = (
         "Store a memory item for later retrieval. Use this to remember important "
         "information, context, user preferences, or conversation history. "
-        "Supports namespaces for organizing memories and optional tags for categorization. "
+        "Supports buckets for organizing memories into collections (e.g., 'real_estate', 'personal'), "
+        "namespaces for organizing memories by user/session, and optional tags for categorization. "
         "Can set TTL for automatic expiration of memories."
     )
     input_model = PutMemoryInput
@@ -33,11 +34,11 @@ class PutMemoryTool(Tool):
             "output": self.output_model.model_json_schema(),
         }
 
-    def _get_storage_key(self, key: str, namespace: str | None) -> str:
-        """Generate a storage key with namespace."""
+    def _get_storage_key(self, key: str, bucket: str, namespace: str | None) -> str:
+        """Generate a storage key with bucket and namespace."""
         if namespace:
-            return f"{namespace}:{key}"
-        return f"default:{key}"
+            return f"{bucket}:{namespace}:{key}"
+        return f"{bucket}:default:{key}"
 
     async def execute(self, input_data: PutMemoryInput) -> ToolResponse:
         """Execute the put memory tool.
@@ -48,7 +49,7 @@ class PutMemoryTool(Tool):
         Returns:
             A response confirming the memory was stored
         """
-        storage_key = self._get_storage_key(input_data.key, input_data.namespace)
+        storage_key = self._get_storage_key(input_data.key, input_data.bucket, input_data.namespace)
         now = datetime.now(timezone.utc)
 
         # Store the memory with metadata
@@ -56,6 +57,7 @@ class PutMemoryTool(Tool):
             "value": input_data.value,
             "metadata": {
                 "stored_at": now.isoformat(),
+                "bucket": input_data.bucket,
                 "namespace": input_data.namespace or "default",
                 "key": input_data.key,
             },

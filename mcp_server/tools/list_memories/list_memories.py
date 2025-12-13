@@ -11,10 +11,11 @@ class ListMemoriesTool(Tool):
 
     name = "list_memories"
     description = (
-        "List all stored memories with optional filtering by namespace or key prefix. "
+        "List all stored memories with optional filtering by bucket, namespace, or key prefix. "
         "Use this to discover what information has been stored, to find specific "
         "memories, or to get an overview of available context. Supports filtering "
-        "by namespace (e.g., user_id, session_id) or key prefix."
+        "by bucket (e.g., 'real_estate', 'personal'), namespace (e.g., user_id, session_id), "
+        "or key prefix."
     )
     input_model = ListMemoriesInput
     output_model = ListMemoriesOutput
@@ -32,21 +33,27 @@ class ListMemoriesTool(Tool):
             "output": self.output_model.model_json_schema(),
         }
 
-    def _parse_storage_key(self, storage_key: str) -> tuple[str, str]:
-        """Parse a storage key into namespace and key."""
-        if ":" in storage_key:
-            namespace, key = storage_key.split(":", 1)
-            return namespace, key
-        return "default", storage_key
+    def _parse_storage_key(self, storage_key: str) -> tuple[str, str, str]:
+        """Parse a storage key into bucket, namespace, and key."""
+        parts = storage_key.split(":", 2)
+        if len(parts) == 3:
+            return parts[0], parts[1], parts[2]
+        elif len(parts) == 2:
+            return "default", parts[0], parts[1]
+        return "default", "default", storage_key
 
     def _matches_filters(
         self,
+        bucket: str,
         namespace: str,
         key: str,
+        bucket_filter: str | None,
         namespace_filter: str | None,
         prefix_filter: str | None,
     ) -> bool:
         """Check if a memory item matches the given filters."""
+        if bucket_filter and bucket != bucket_filter:
+            return False
         if namespace_filter and namespace != namespace_filter:
             return False
         if prefix_filter and not key.startswith(prefix_filter):
@@ -68,11 +75,15 @@ class ListMemoriesTool(Tool):
         # Filter and build memory items
         memory_items = []
         for storage_key in all_keys:
-            namespace, key = self._parse_storage_key(storage_key)
+            bucket, namespace, key = self._parse_storage_key(storage_key)
+
+            # Skip bucket metadata entries
+            if namespace == "__bucket_meta__":
+                continue
 
             # Apply filters
             if not self._matches_filters(
-                namespace, key, input_data.namespace, input_data.prefix
+                bucket, namespace, key, input_data.bucket, input_data.namespace, input_data.prefix
             ):
                 continue
 
@@ -88,6 +99,7 @@ class ListMemoriesTool(Tool):
             memory_items.append(
                 MemoryItem(
                     key=key,
+                    bucket=bucket,
                     namespace=namespace,
                     has_value=has_value,
                     metadata=metadata,

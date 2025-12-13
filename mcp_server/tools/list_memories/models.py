@@ -18,10 +18,17 @@ class ListMemoriesInput(BaseToolInput):
                 {
                     "prefix": "user_",
                 },
+                {
+                    "bucket": "real_estate",
+                },
             ]
         }
     )
 
+    bucket: Optional[str] = Field(
+        default=None,
+        description="Optional bucket filter to list memories from a specific bucket. If not provided, lists from all buckets.",
+    )
     namespace: Optional[str] = Field(
         default=None,
         description="Optional namespace filter to list memories from a specific namespace",
@@ -36,6 +43,7 @@ class MemoryItem(BaseModel):
     """Single memory item in the list."""
 
     key: str = Field(description="The memory key")
+    bucket: str = Field(description="The bucket the memory belongs to")
     namespace: str = Field(description="The namespace the memory belongs to")
     has_value: bool = Field(description="Whether the memory has a stored value")
     metadata: Optional[Dict[str, Any]] = Field(

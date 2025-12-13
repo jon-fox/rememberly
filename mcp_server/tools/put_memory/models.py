@@ -21,6 +21,12 @@ class PutMemoryInput(BaseToolInput):
                     "namespace": "session_123",
                     "tags": ["conversation", "mcp", "datetime"],
                 },
+                {
+                    "key": "property_123",
+                    "value": {"address": "123 Main St", "price": 500000},
+                    "bucket": "real_estate",
+                    "tags": ["listing", "for_sale"],
+                },
             ]
         }
     )
@@ -28,6 +34,10 @@ class PutMemoryInput(BaseToolInput):
     key: str = Field(description="The key/identifier for storing the memory item")
     value: Any = Field(
         description="The value to store (can be string, dict, list, etc.)"
+    )
+    bucket: str = Field(
+        default="default",
+        description="The bucket (container) to store the memory in. Defaults to 'default'.",
     )
     namespace: Optional[str] = Field(
         default=None,
