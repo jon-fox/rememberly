@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscribe - Rememberly</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="header-logo-text">
+                    <img src="images/rememberly.png" alt="Rememberly Logo" class="logo">
+                    <div>
+                        <h1>Rememberly</h1>
+                        <p class="tagline">Your AI-powered memory companion</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="subscription-main">
+            <h2>Unlock Unlimited Memories</h2>
+            <p>Subscribe to Rememberly and get access to:</p>
+            
+            <div class="benefits-list">
+                <div class="benefit-item">
+                    <span class="check-icon">✓</span>
+                    <span>Unlimited memory storage</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="check-icon">✓</span>
+                    <span>AI-powered semantic search</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="check-icon">✓</span>
+                    <span>Advanced organization tools</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="check-icon">✓</span>
+                    <span>Priority support</span>
+                </div>
+            </div>
+
+            <div class="stripe-button-container">
+                <stripe-buy-button
+                    buy-button-id="buy_btn_1SdjxpI33dBKR0OtPmhGlFwI"
+                    publishable-key="pk_test_51Qcy5UI33dBKR0Otl0KjWwjURbN0yzYYxgmEOtRN7SNspnnYTzkA9juZM1UsAjqxXFKC9o667S3iMCuvYYftjxCc000r10Q3HI"
+                >
+                </stripe-buy-button>
+            </div>
+
+            <p class="back-link">
+                <a href="index.html">← Back to Home</a>
+            </p>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Rememberly. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Stripe Buy Button -->
+    <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+</body>
+</html>

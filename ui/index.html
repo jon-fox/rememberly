@@ -29,7 +29,7 @@
             <section class="hero">
                 <h2>Never Forget What Matters</h2>
                 <p>Rememberly helps you capture, organize, and recall your important memories with the power of AI.</p>
-                <button class="cta-button">Get Started</button>
+                <button class="cta-button" onclick="window.location.href='subscribe.html'">Get Started</button>
             </section>
 
             <section class="features">
@@ -55,18 +55,6 @@
                 </div>
                 <div id="memoryList" class="memory-list"></div>
             </section>
-
-            <section class="subscription">
-                <h2>Get Started with Rememberly</h2>
-                <p>Subscribe to unlock unlimited memories</p>
-                <div class="stripe-button-container">
-                    <stripe-buy-button
-                        buy-button-id="buy_btn_1SdjxpI33dBKR0OtPmhGlFwI"
-                        publishable-key="pk_test_51Qcy5UI33dBKR0Otl0KjWwjURbN0yzYYxgmEOtRN7SNspnnYTzkA9juZM1UsAjqxXFKC9o667S3iMCuvYYftjxCc000r10Q3HI"
-                    >
-                    </stripe-buy-button>
-                </div>
-            </section>
         </main>
 
         <footer>
@@ -74,9 +62,6 @@
         </footer>
     </div>
 
-    <!-- Stripe Buy Button -->
-    <script async src="https://js.stripe.com/v3/buy-button.js"></script>
-    
     <!-- Supabase JS SDK from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
