@@ -1,15 +1,19 @@
 """Tools for rememberly MCP server."""
 
 from .get_memory import GetMemoryTool
-from .put_memory import PutMemoryTool
+from .store_memory import StoreMemoryTool
+from .delete_memory import DeleteMemoryTool
 from .list_memories import ListMemoriesTool
 from .list_buckets import ListBucketsTool
 from .create_bucket import CreateBucketTool
+from .delete_bucket import DeleteBucketTool
 
 __all__ = [
     "GetMemoryTool",
-    "PutMemoryTool",
+    "StoreMemoryTool",
+    "DeleteMemoryTool",
     "ListMemoriesTool",
     "ListBucketsTool",
     "CreateBucketTool",
+    "DeleteBucketTool",
 ]

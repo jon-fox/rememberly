@@ -1,12 +1,12 @@
-"""Models for Put Memory tool."""
+"""Models for Store Memory tool."""
 
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field, ConfigDict
 from interfaces.tool import BaseToolInput
 
 
-class PutMemoryInput(BaseToolInput):
-    """Input schema for Put Memory tool."""
+class StoreMemoryInput(BaseToolInput):
+    """Input schema for Store Memory tool."""
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -53,8 +53,8 @@ class PutMemoryInput(BaseToolInput):
     )
 
 
-class PutMemoryOutput(BaseModel):
-    """Output schema for Put Memory tool."""
+class StoreMemoryOutput(BaseModel):
+    """Output schema for Store Memory tool."""
 
     model_config = ConfigDict(
         json_schema_extra={

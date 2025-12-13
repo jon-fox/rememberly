@@ -3,14 +3,14 @@
 from typing import Dict, Any
 from datetime import datetime, timezone
 from interfaces.tool import Tool, ToolResponse
-from .models import PutMemoryInput, PutMemoryOutput
+from .models import StoreMemoryInput, StoreMemoryOutput
 from utils import get_shared_storage
 
 
-class PutMemoryTool(Tool):
+class StoreMemoryTool(Tool):
     """Tool for storing memories and context."""
 
-    name = "put_memory"
+    name = "store_memory"
     description = (
         "Store a memory item for later retrieval. Use this to remember important "
         "information, context, user preferences, or conversation history. "
@@ -18,11 +18,11 @@ class PutMemoryTool(Tool):
         "namespaces for organizing memories by user/session, and optional tags for categorization. "
         "Can set TTL for automatic expiration of memories."
     )
-    input_model = PutMemoryInput
-    output_model = PutMemoryOutput
+    input_model = StoreMemoryInput
+    output_model = StoreMemoryOutput
 
     def __init__(self):
-        """Initialize the put memory tool."""
+        """Initialize the store memory tool."""
         self._storage = get_shared_storage()
 
     def get_schema(self) -> Dict[str, Any]:
@@ -73,7 +73,7 @@ class PutMemoryTool(Tool):
 
         self._storage.put(storage_key, memory_data)
 
-        output = PutMemoryOutput(
+        output = StoreMemoryOutput(
             success=True,
             key=input_data.key,
             message=f"Memory stored successfully under key '{input_data.key}'",
