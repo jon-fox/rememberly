@@ -1,10 +1,14 @@
 // Login page functionality
 document.addEventListener('DOMContentLoaded', async () => {
+    // Get redirect URL from query params
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectUrl = urlParams.get('redirect') || 'index.html';
+    
     // Check if user is already authenticated
     const authenticated = await isAuthenticated();
     if (authenticated) {
-        // Redirect to main page if already logged in
-        window.location.href = 'index.html';
+        // Redirect to the intended page if already logged in
+        window.location.href = redirectUrl;
         return;
     }
 
@@ -71,8 +75,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             console.log('Sign in successful:', user);
             
-            // Redirect to main page
-            window.location.href = 'index.html';
+            // Redirect to intended page
+            window.location.href = redirectUrl;
         } catch (error) {
             console.error('Sign in error:', error);
             loginError.textContent = error.message || 'Failed to sign in. Please check your credentials.';
@@ -131,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Immediate sign-in (if email confirmation is disabled)
                 registerSuccess.textContent = 'Account created successfully! Redirecting...';
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = redirectUrl;
                 }, 1500);
             }
         } catch (error) {

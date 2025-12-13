@@ -11,23 +11,21 @@ const signOutBtn = document.getElementById('signOutBtn');
 
 // Initialize authentication state
 async function initAuth() {
-    // Check if user is authenticated
-    const authenticated = await requireAuth();
+    // Check if user is authenticated (optional, no redirect)
+    const authenticated = await isAuthenticated();
     
-    if (!authenticated) {
-        return; // Will redirect to login
-    }
-    
-    // Get current user
-    currentUser = await getCurrentUser();
-    
-    if (currentUser) {
-        // Show user menu
-        userMenu.style.display = 'flex';
-        userEmail.textContent = currentUser.email;
+    if (authenticated) {
+        // Get current user
+        currentUser = await getCurrentUser();
         
-        // Load user-specific memories
-        loadMemories();
+        if (currentUser) {
+            // Show user menu
+            userMenu.style.display = 'flex';
+            userEmail.textContent = currentUser.email;
+            
+            // Load user-specific memories
+            loadMemories();
+        }
     }
 }
 
@@ -75,6 +73,13 @@ function renderMemories() {
 
 // Add a new memory
 function addMemory() {
+    // Check if user is signed in
+    if (!currentUser) {
+        alert('Please sign in to save memories!');
+        window.location.href = 'login.html';
+        return;
+    }
+    
     const text = memoryInput.value.trim();
     
     if (text === '') {
@@ -133,6 +138,13 @@ memoryInput.addEventListener('keypress', (e) => {
 });
 
 signOutBtn.addEventListener('click', handleSignOut);
+
+const subscribeBtn = document.getElementById('subscribeBtn');
+if (subscribeBtn) {
+    subscribeBtn.addEventListener('click', () => {
+        window.location.href = 'subscribe.html';
+    });
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
