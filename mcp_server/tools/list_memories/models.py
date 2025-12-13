@@ -13,9 +13,6 @@ class ListMemoriesInput(BaseToolInput):
             "examples": [
                 {},
                 {
-                    "namespace": "session_123",
-                },
-                {
                     "prefix": "user_",
                 },
                 {
@@ -29,10 +26,6 @@ class ListMemoriesInput(BaseToolInput):
         default=None,
         description="Optional bucket filter to list memories from a specific bucket. If not provided, lists from all buckets.",
     )
-    namespace: Optional[str] = Field(
-        default=None,
-        description="Optional namespace filter to list memories from a specific namespace",
-    )
     prefix: Optional[str] = Field(
         default=None,
         description="Optional key prefix filter to list memories with keys starting with this prefix",
@@ -44,7 +37,6 @@ class MemoryItem(BaseModel):
 
     key: str = Field(description="The memory key")
     bucket: str = Field(description="The bucket the memory belongs to")
-    namespace: str = Field(description="The namespace the memory belongs to")
     has_value: bool = Field(description="Whether the memory has a stored value")
     metadata: Optional[Dict[str, Any]] = Field(
         default=None, description="Optional metadata about the memory"
@@ -61,19 +53,18 @@ class ListMemoriesOutput(BaseModel):
                     "memories": [
                         {
                             "key": "user_preferences",
-                            "namespace": "default",
+                            "bucket": "default",
                             "has_value": True,
                             "metadata": {"created_at": "2025-12-08T10:00:00Z"},
                         },
                         {
                             "key": "conversation_context",
-                            "namespace": "session_123",
+                            "bucket": "default",
                             "has_value": True,
                             "metadata": {"created_at": "2025-12-08T11:00:00Z"},
                         },
                     ],
                     "count": 2,
-                    "namespace_filter": None,
                     "prefix_filter": None,
                 }
             ]
@@ -82,9 +73,6 @@ class ListMemoriesOutput(BaseModel):
 
     memories: List[MemoryItem] = Field(description="List of memory items")
     count: int = Field(description="Total number of memories returned")
-    namespace_filter: Optional[str] = Field(
-        default=None, description="The namespace filter that was applied, if any"
-    )
     prefix_filter: Optional[str] = Field(
         default=None, description="The prefix filter that was applied, if any"
     )

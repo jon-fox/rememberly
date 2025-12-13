@@ -14,9 +14,8 @@ class StoreMemoryTool(Tool):
     description = (
         "Store a memory item for later retrieval. Use this to remember important "
         "information, context, user preferences, or conversation history. "
-        "Supports buckets for organizing memories into collections (e.g., 'real_estate', 'personal'), "
-        "namespaces for organizing memories by user/session, and optional tags for categorization. "
-        "Can set TTL for automatic expiration of memories."
+        "Supports buckets for organizing memories into collections (e.g., 'real_estate', 'personal') "
+        "and optional tags for categorization. Can set TTL for automatic expiration of memories."
     )
     input_model = StoreMemoryInput
     output_model = StoreMemoryOutput
@@ -34,14 +33,12 @@ class StoreMemoryTool(Tool):
             "output": self.output_model.model_json_schema(),
         }
 
-    def _get_storage_key(self, key: str, bucket: str, namespace: str | None) -> str:
-        """Generate a storage key with bucket and namespace."""
-        if namespace:
-            return f"{bucket}:{namespace}:{key}"
-        return f"{bucket}:default:{key}"
+    def _get_storage_key(self, key: str, bucket: str) -> str:
+        """Generate a storage key with bucket."""
+        return f"{bucket}:{key}"
 
-    async def execute(self, input_data: PutMemoryInput) -> ToolResponse:
-        """Execute the put memory tool.
+    async def execute(self, input_data: StoreMemoryInput) -> ToolResponse:
+        """Execute the store memory tool.
 
         Args:
             input_data: The validated input for the tool
@@ -49,7 +46,7 @@ class StoreMemoryTool(Tool):
         Returns:
             A response confirming the memory was stored
         """
-        storage_key = self._get_storage_key(input_data.key, input_data.bucket, input_data.namespace)
+        storage_key = self._get_storage_key(input_data.key, input_data.bucket)
         now = datetime.now(timezone.utc)
 
         # Store the memory with metadata
@@ -58,7 +55,6 @@ class StoreMemoryTool(Tool):
             "metadata": {
                 "stored_at": now.isoformat(),
                 "bucket": input_data.bucket,
-                "namespace": input_data.namespace or "default",
                 "key": input_data.key,
             },
         }

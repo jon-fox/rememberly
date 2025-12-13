@@ -12,8 +12,8 @@ class DeleteMemoryTool(Tool):
     name = "delete_memory"
     description = (
         "Delete a stored memory item by key. Use this to remove information "
-        "that is no longer needed or should be forgotten. Supports buckets and "
-        "namespaces to precisely target the memory to delete."
+        "that is no longer needed or should be forgotten. Supports buckets "
+        "to organize the memory to delete."
     )
     input_model = DeleteMemoryInput
     output_model = DeleteMemoryOutput
@@ -31,11 +31,9 @@ class DeleteMemoryTool(Tool):
             "output": self.output_model.model_json_schema(),
         }
 
-    def _get_storage_key(self, key: str, bucket: str, namespace: str | None) -> str:
-        """Generate a storage key with bucket and namespace."""
-        if namespace:
-            return f"{bucket}:{namespace}:{key}"
-        return f"{bucket}:default:{key}"
+    def _get_storage_key(self, key: str, bucket: str) -> str:
+        """Generate a storage key with bucket."""
+        return f"{bucket}:{key}"
 
     async def execute(self, input_data: DeleteMemoryInput) -> ToolResponse:
         """Execute the delete memory tool.
@@ -46,7 +44,7 @@ class DeleteMemoryTool(Tool):
         Returns:
             A response confirming whether the memory was deleted
         """
-        storage_key = self._get_storage_key(input_data.key, input_data.bucket, input_data.namespace)
+        storage_key = self._get_storage_key(input_data.key, input_data.bucket)
 
         deleted = self._storage.delete(storage_key)
 

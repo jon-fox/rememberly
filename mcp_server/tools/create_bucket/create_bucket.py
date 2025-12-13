@@ -68,7 +68,7 @@ class CreateBucketTool(Tool):
         else:
             # Create a metadata entry for the bucket
             # This ensures the bucket shows up even with no memories
-            bucket_meta_key = f"{bucket_name}:__bucket_meta__:info"
+            bucket_meta_key = f"{bucket_name}:__bucket_meta__info"
             self._storage.put(bucket_meta_key, {
                 "bucket_name": bucket_name,
                 "description": input_data.description or "",

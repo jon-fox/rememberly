@@ -31,14 +31,12 @@ class DeleteBucketTool(Tool):
             "output": self.output_model.model_json_schema(),
         }
 
-    def _parse_storage_key(self, storage_key: str) -> tuple[str, str, str]:
-        """Parse a storage key into bucket, namespace, and key."""
-        parts = storage_key.split(":", 2)
-        if len(parts) == 3:
-            return parts[0], parts[1], parts[2]
-        elif len(parts) == 2:
-            return "default", parts[0], parts[1]
-        return "default", "default", storage_key
+    def _parse_storage_key(self, storage_key: str) -> tuple[str, str]:
+        """Parse a storage key into bucket and key."""
+        parts = storage_key.split(":", 1)
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        return "default", storage_key
 
     async def execute(self, input_data: DeleteBucketInput) -> ToolResponse:
         """Execute the delete bucket tool.

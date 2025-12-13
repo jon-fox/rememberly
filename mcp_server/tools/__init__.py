@@ -7,6 +7,7 @@ from .list_memories import ListMemoriesTool
 from .list_buckets import ListBucketsTool
 from .create_bucket import CreateBucketTool
 from .delete_bucket import DeleteBucketTool
+from .get_metrics import GetMetricsTool
 
 __all__ = [
     "GetMemoryTool",
@@ -16,4 +17,5 @@ __all__ = [
     "ListBucketsTool",
     "CreateBucketTool",
     "DeleteBucketTool",
+    "GetMetricsTool",
 ]

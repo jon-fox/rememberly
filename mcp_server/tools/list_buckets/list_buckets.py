@@ -32,17 +32,15 @@ class ListBucketsTool(Tool):
             "output": self.output_model.model_json_schema(),
         }
 
-    def _parse_storage_key(self, storage_key: str) -> tuple[str, str, str]:
-        """Parse a storage key into bucket, namespace, and key.
+    def _parse_storage_key(self, storage_key: str) -> tuple[str, str]:
+        """Parse a storage key into bucket and key.
         
-        Format: bucket:namespace:key
+        Format: bucket:key
         """
-        parts = storage_key.split(":", 2)
-        if len(parts) == 3:
-            return parts[0], parts[1], parts[2]
-        elif len(parts) == 2:
-            return "default", parts[0], parts[1]
-        return "default", "default", storage_key
+        parts = storage_key.split(":", 1)
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        return "default", storage_key
 
     async def execute(self, input_data: ListBucketsInput) -> ToolResponse:
         """Execute the list buckets tool.
@@ -59,9 +57,9 @@ class ListBucketsTool(Tool):
         # Count memories per bucket
         bucket_counts: Dict[str, int] = {}
         for storage_key in all_keys:
-            bucket, namespace, _ = self._parse_storage_key(storage_key)
+            bucket, key = self._parse_storage_key(storage_key)
             # Skip bucket metadata entries when counting
-            if namespace == "__bucket_meta__":
+            if key.startswith("__bucket_meta__:"):
                 continue
             bucket_counts[bucket] = bucket_counts.get(bucket, 0) + 1
 

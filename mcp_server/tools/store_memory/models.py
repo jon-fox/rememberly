@@ -18,7 +18,6 @@ class StoreMemoryInput(BaseToolInput):
                 {
                     "key": "conversation_summary",
                     "value": "User asked about MCP resources and datetime handling",
-                    "namespace": "session_123",
                     "tags": ["conversation", "mcp", "datetime"],
                 },
                 {
@@ -38,10 +37,6 @@ class StoreMemoryInput(BaseToolInput):
     bucket: str = Field(
         default="default",
         description="The bucket (container) to store the memory in. Defaults to 'default'.",
-    )
-    namespace: Optional[str] = Field(
-        default=None,
-        description="Optional namespace to organize memories (e.g., user_id, session_id)",
     )
     tags: Optional[List[str]] = Field(
         default=None,
