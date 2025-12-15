@@ -10,20 +10,80 @@ const userEmail = document.getElementById('userEmail');
 const signOutBtn = document.getElementById('signOutBtn');
 const signInBtn = document.getElementById('signInBtn');
 
+// Create user in DynamoDB via API - ensures user exists in database
+async function ensureUserInDatabase(user, accessToken) {
+    console.log('>>>>> ensureUserInDatabase CALLED <<<<<');
+    console.log('User:', user);
+    console.log('Has token:', !!accessToken);
+    
+    try {
+        const apiEndpoint = 'https://mcp.rememberly.app/users';
+        const payload = {
+            user_id: user.id,
+            email: user.email,
+            username: user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0]
+        };
+        
+        console.log('API Endpoint:', apiEndpoint);
+        console.log('Payload:', JSON.stringify(payload, null, 2));
+        console.log('Sending fetch request to create user...');
+        
+        const response = await fetch(apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (response.ok) {
+            const responseData = await response.json();
+            console.log('SUCCESS: User created/updated in DynamoDB:', responseData);
+            return true;
+        } else {
+            const errorText = await response.text();
+            console.error('FAILED: Failed to create user. Status:', response.status, 'Response:', errorText);
+            return false;
+        }
+    } catch (error) {
+        console.error('EXCEPTION: Exception creating user:', error);
+        return false;
+    }
+}
+
 // Initialize authentication state
 async function initAuth() {
+    console.log('=== INDEX PAGE: initAuth called ===');
+    
     // Check if user is authenticated (optional, no redirect)
     const authenticated = await isAuthenticated();
+    console.log('Is authenticated:', authenticated);
     
     if (authenticated) {
         // Get current user
         currentUser = await getCurrentUser();
+        const session = await getCurrentSession();
+        
+        console.log('Current user:', currentUser);
+        console.log('Has session:', !!session);
+        console.log('Has token:', !!session?.access_token);
         
         if (currentUser) {
             // Show user menu, hide sign in button
             userMenu.style.display = 'flex';
             signInBtn.style.display = 'none';
             userEmail.textContent = currentUser.email;
+            
+            // Ensure user exists in database (for OAuth users especially)
+            if (session?.access_token) {
+                console.log('===== CALLING ensureUserInDatabase =====');
+                await ensureUserInDatabase(currentUser, session.access_token);
+            } else {
+                console.warn('No access token available');
+            }
             
             // Load user-specific memories
             loadMemories();

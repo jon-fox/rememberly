@@ -34,15 +34,15 @@ async function createUserInDatabase(user, accessToken, username = null) {
         
         if (response.ok) {
             const responseData = await response.json();
-            console.log('✅ SUCCESS! User created/updated in DynamoDB:', responseData);
+            console.log('SUCCESS: User created/updated in DynamoDB:', responseData);
             return true;
         } else {
             const errorText = await response.text();
-            console.error('❌ FAILED! Status:', response.status, 'Response:', errorText);
+            console.error('FAILED: Status:', response.status, 'Response:', errorText);
             return false;
         }
     } catch (error) {
-        console.error('❌ EXCEPTION in createUserInDatabase:', error);
+        console.error('EXCEPTION in createUserInDatabase:', error);
         console.error('Error name:', error.name);
         console.error('Error message:', error.message);
         console.error('Error stack:', error.stack);
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 full_name: name
             });
             
-            console.log('✅ signUp completed!');
+            console.log('SUCCESS: signUp completed!');
             console.log('Sign up result:', JSON.stringify(signUpResult, null, 2));
             
             const user = signUpResult.user;
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // If no session in the response, try to get the current session
             if (!session && user) {
-                console.log('⚠️ No session in sign up response, fetching current session...');
+                console.log('WARNING: No session in sign up response, fetching current session...');
                 session = await getCurrentSession();
                 console.log('Fetched session:', session);
             }
@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const created = await createUserInDatabase(user, session.access_token, name);
                 console.log('===== CREATE USER RESULT:', created, '=====');
             } else {
-                console.warn('⚠️ No session token available - user will be created on first login');
+                console.warn('WARNING: No session token available - user will be created on first login');
                 console.log('Session object:', session);
             }
             
