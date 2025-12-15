@@ -1,3 +1,45 @@
+// Create user in DynamoDB via API - defined globally so it can be used before DOM loads
+async function createUserInDatabase(user, accessToken, username = null) {
+    try {
+        const apiEndpoint = 'https://mcp.rememberly.app/users';
+        const payload = {
+            user_id: user.id,
+            email: user.email,
+            username: username || user.user_metadata?.full_name || user.email.split('@')[0]
+        };
+        
+        console.log('Making API call to create user:', {
+            endpoint: apiEndpoint,
+            payload: payload,
+            hasToken: !!accessToken
+        });
+        
+        const response = await fetch(apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        console.log('API response status:', response.status);
+        
+        if (response.ok) {
+            const responseData = await response.json();
+            console.log('User created/updated in DynamoDB successfully:', responseData);
+            return true;
+        } else {
+            const errorText = await response.text();
+            console.error('Failed to create user in DynamoDB. Status:', response.status, 'Response:', errorText);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error creating user in DynamoDB:', error);
+        return false;
+    }
+}
+
 // Login page functionality
 document.addEventListener('DOMContentLoaded', async () => {
     // Get redirect URL from query params
@@ -7,6 +49,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check if user is already authenticated
     const authenticated = await isAuthenticated();
     if (authenticated) {
+        // User just logged in (possibly via OAuth), ensure they're in the database
+        const user = await getCurrentUser();
+        const session = await getCurrentSession();
+        
+        if (user && session?.access_token) {
+            console.log('User authenticated, ensuring database entry exists...');
+            // Try to create user in database (this is idempotent)
+            await createUserInDatabase(user, session.access_token);
+        }
+        
         // Redirect to the intended page if already logged in
         window.location.href = redirectUrl;
         return;
@@ -75,6 +127,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             console.log('Sign in successful:', user);
             
+            // Ensure user exists in DynamoDB
+            if (session?.access_token) {
+                await createUserInDatabase(user, session.access_token);
+            }
+            
             // Redirect to intended page
             window.location.href = redirectUrl;
         } catch (error) {
@@ -115,40 +172,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             setButtonLoading(submitButton, true);
             
-            const { user, session } = await signUp(email, password, {
+            const signUpResult = await signUp(email, password, {
                 full_name: name
             });
             
-            console.log('Sign up successful:', user);
+            console.log('Sign up result:', signUpResult);
+            
+            const user = signUpResult.user;
+            let session = signUpResult.session;
+            
+            // If no session in the response, try to get the current session
+            if (!session && user) {
+                console.log('No session in sign up response, fetching current session...');
+                session = await getCurrentSession();
+                console.log('Current session:', session);
+            }
+            
+            console.log('Sign up successful - User:', user, 'Session:', session);
             
             // Create user in DynamoDB via user service API (with JWT)
             if (session?.access_token) {
-                try {
-                    const apiEndpoint = 'https://mcp.rememberly.app/users';
-                    const response = await fetch(apiEndpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${session.access_token}`
-                        },
-                        body: JSON.stringify({
-                            user_id: user.id,
-                            email: email,
-                            username: name
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        console.log('User created in DynamoDB successfully');
-                    } else {
-                        console.error('Failed to create user in DynamoDB:', await response.text());
-                    }
-                } catch (dbError) {
-                    console.error('Error creating user in DynamoDB:', dbError);
-                    // Don't block signup if DynamoDB creation fails
-                }
+                console.log('Creating user in database with token...');
+                const created = await createUserInDatabase(user, session.access_token, name);
+                console.log('User creation result:', created);
             } else {
-                console.log('No session token yet - user will be created on first login');
+                console.log('No session token available - user will be created on first login');
             }
             
             // Check if email confirmation is required
