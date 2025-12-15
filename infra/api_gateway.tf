@@ -7,10 +7,12 @@ resource "aws_apigatewayv2_api" "mcp" {
   description   = "MCP HTTP API with Supabase JWT authentication"
 
   cors_configuration {
-    allow_origins = ["https://${local.domain_name}", "https://${local.www_domain}", "http://localhost:3000"]
-    allow_methods = ["GET", "POST", "OPTIONS"]
-    allow_headers = ["content-type", "authorization"]
-    max_age       = 300
+    allow_origins     = ["https://${local.domain_name}", "https://${local.www_domain}", "http://localhost:3000"]
+    allow_methods     = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_headers     = ["content-type", "authorization", "x-requested-with"]
+    expose_headers    = ["content-type", "x-amz-request-id"]
+    allow_credentials = false
+    max_age           = 300
   }
 
   tags = {
