@@ -67,11 +67,11 @@ jobs:
           # Build and push User Service image
           cd user_service
           USER_IMAGE_TAG=$(git ls-tree -r HEAD ../user_service/ | shasum | cut -c1-7)
-          docker build -t $ECR_REGISTRY/rememberly-user-service:$USER_IMAGE_TAG .
-          docker tag $ECR_REGISTRY/rememberly-user-service:$USER_IMAGE_TAG $ECR_REGISTRY/rememberly-user-service:latest
-          docker push $ECR_REGISTRY/rememberly-user-service:$USER_IMAGE_TAG
-          docker push $ECR_REGISTRY/rememberly-user-service:latest
-          echo "user_service_image_uri=$ECR_REGISTRY/rememberly-user-service:$USER_IMAGE_TAG" >> $GITHUB_OUTPUT
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:user-service-$USER_IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:user-service-$USER_IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:user-service-latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:user-service-$USER_IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:user-service-latest
+          echo "user_service_image_uri=$ECR_REGISTRY/$ECR_REPOSITORY:user-service-$USER_IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Update Lambda functions
         run: |
