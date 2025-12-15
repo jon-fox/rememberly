@@ -8,6 +8,7 @@ const memoryList = document.getElementById('memoryList');
 const userMenu = document.getElementById('userMenu');
 const userEmail = document.getElementById('userEmail');
 const signOutBtn = document.getElementById('signOutBtn');
+const signInBtn = document.getElementById('signInBtn');
 
 // Initialize authentication state
 async function initAuth() {
@@ -19,13 +20,18 @@ async function initAuth() {
         currentUser = await getCurrentUser();
         
         if (currentUser) {
-            // Show user menu
+            // Show user menu, hide sign in button
             userMenu.style.display = 'flex';
+            signInBtn.style.display = 'none';
             userEmail.textContent = currentUser.email;
             
             // Load user-specific memories
             loadMemories();
         }
+    } else {
+        // Show sign in button, hide user menu
+        signInBtn.style.display = 'block';
+        userMenu.style.display = 'none';
     }
 }
 
@@ -122,6 +128,7 @@ onAuthStateChange((event, session) => {
         currentUser = session?.user;
         if (currentUser) {
             userMenu.style.display = 'flex';
+            signInBtn.style.display = 'none';
             userEmail.textContent = currentUser.email;
             loadMemories();
         }
@@ -138,6 +145,10 @@ memoryInput.addEventListener('keypress', (e) => {
 });
 
 signOutBtn.addEventListener('click', handleSignOut);
+
+signInBtn.addEventListener('click', () => {
+    window.location.href = 'login.html';
+});
 
 const subscribeBtn = document.getElementById('subscribeBtn');
 if (subscribeBtn) {

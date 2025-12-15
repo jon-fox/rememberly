@@ -21,7 +21,6 @@ body {
 }
 
 header {
-    text-align: center;
     color: #00ff88;
     margin-bottom: 3rem;
     text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
@@ -626,6 +625,11 @@ footer {
     margin: 0 auto;
 }
 
+.auth-controls {
+    display: flex;
+    align-items: center;
+}
+
 .user-menu {
     display: flex;
     align-items: center;
@@ -638,6 +642,7 @@ footer {
     opacity: 0.9;
 }
 
+.sign-in-btn,
 .sign-out-btn {
     background: rgba(0, 255, 136, 0.1);
     color: #00ff88;
@@ -650,6 +655,7 @@ footer {
     transition: all 0.3s ease;
 }
 
+.sign-in-btn:hover,
 .sign-out-btn:hover {
     background: rgba(0, 255, 136, 0.2);
     border-color: rgba(0, 255, 136, 0.5);
