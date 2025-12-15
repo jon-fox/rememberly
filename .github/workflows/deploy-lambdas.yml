@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'mcp_server/**'
+      - 'user_service/**'
       - '.github/workflows/deploy-lambdas.yml'
 
 permissions:
@@ -58,15 +59,36 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image_uri=$ECR_REGISTRY/$ECR_REPOSITORY:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
 
-      - name: Update Lambda function
+      - name: Build and push User Service image
+        id: build-user-service
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          # Build and push User Service image
+          cd user_service
+          USER_IMAGE_TAG=$(git ls-tree -r HEAD ../user_service/ | shasum | cut -c1-7)
+          docker build -t $ECR_REGISTRY/rememberly-user-service:$USER_IMAGE_TAG .
+          docker tag $ECR_REGISTRY/rememberly-user-service:$USER_IMAGE_TAG $ECR_REGISTRY/rememberly-user-service:latest
+          docker push $ECR_REGISTRY/rememberly-user-service:$USER_IMAGE_TAG
+          docker push $ECR_REGISTRY/rememberly-user-service:latest
+          echo "user_service_image_uri=$ECR_REGISTRY/rememberly-user-service:$USER_IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Update Lambda functions
         run: |
           # Update MCP server Lambda
           FUNCTION_NAME="rememberly-mcp-server"
           aws lambda update-function-code \
             --function-name $FUNCTION_NAME \
             --image-uri ${{ steps.build-image.outputs.image_uri }} || true
+          
+          # Update User Service Lambda
+          USER_FUNCTION_NAME="rememberly-user-service"
+          aws lambda update-function-code \
+            --function-name $USER_FUNCTION_NAME \
+            --image-uri ${{ steps.build-user-service.outputs.user_service_image_uri }} || true
 
       - name: Deployment complete
         run: |
-          echo "MCP Lambda deployed successfully!"
+          echo "Lambda deployment complete!"
           echo "MCP Server Image: ${{ steps.build-image.outputs.image_uri }}"
+          echo "User Service Image: ${{ steps.build-user-service.outputs.user_service_image_uri }}"

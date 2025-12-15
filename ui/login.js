@@ -121,6 +121,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             console.log('Sign up successful:', user);
             
+            // Create user in DynamoDB via user service API (with JWT)
+            if (session?.access_token) {
+                try {
+                    const apiEndpoint = 'https://mcp.rememberly.app/users';
+                    const response = await fetch(apiEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({
+                            user_id: user.id,
+                            email: email,
+                            username: name
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        console.log('User created in DynamoDB successfully');
+                    } else {
+                        console.error('Failed to create user in DynamoDB:', await response.text());
+                    }
+                } catch (dbError) {
+                    console.error('Error creating user in DynamoDB:', dbError);
+                    // Don't block signup if DynamoDB creation fails
+                }
+            } else {
+                console.log('No session token yet - user will be created on first login');
+            }
+            
             // Check if email confirmation is required
             if (!session) {
                 registerSuccess.textContent = 'Account created! Please check your email to verify your account.';
