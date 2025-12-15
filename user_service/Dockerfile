@@ -6,15 +6,15 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # Set uv to use system Python
 ENV UV_SYSTEM_PYTHON=1
 
-# Set working directory
+COPY pyproject.toml ${LAMBDA_TASK_ROOT}/
+
+# Install dependencies using uv (including uvicorn for ASGI server)
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-# Copy requirements and install dependencies using uv
-COPY requirements.txt ${LAMBDA_TASK_ROOT}/
-RUN uv pip install --no-cache -r requirements.txt
+RUN uv pip install --no-cache -r pyproject.toml uvicorn
 
 # Copy handler
-COPY handler.py ${LAMBDA_TASK_ROOT}/
+COPY . ${LAMBDA_TASK_ROOT}/
 
 # Set the CMD to your handler
 CMD ["handler.lambda_handler"]
