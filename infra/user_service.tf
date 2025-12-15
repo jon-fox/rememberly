@@ -1,50 +1,11 @@
 # User Management Lambda - separate from MCP server
 
-# ECR repository for user service
-resource "aws_ecr_repository" "user_service" {
-  name                 = "rememberly-user-service"
-  image_tag_mutability = "MUTABLE"
-
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-
-  tags = {
-    Name        = "rememberly-user-service"
-    Environment = var.environment
-    Project     = "rememberly"
-  }
-}
-
-# ECR lifecycle policy
-resource "aws_ecr_lifecycle_policy" "user_service" {
-  repository = aws_ecr_repository.user_service.name
-
-  policy = jsonencode({
-    rules = [
-      {
-        rulePriority = 1
-        description  = "Keep last 5 images"
-        selection = {
-          tagStatus     = "tagged"
-          tagPrefixList = ["latest"]
-          countType     = "imageCountMoreThan"
-          countNumber   = 5
-        }
-        action = {
-          type = "expire"
-        }
-      }
-    ]
-  })
-}
-
 # Lambda function for user management using container image
 resource "aws_lambda_function" "user_service" {
   function_name = "rememberly-user-service"
   role          = aws_iam_role.user_service.arn
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.user_service.repository_url}:latest"
+  image_uri     = "${replace(var.mcp_lambda_image_uri, ":latest", ":user-service-latest")}"
   timeout       = 30
   memory_size   = 256
 
