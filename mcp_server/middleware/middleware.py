@@ -1,9 +1,13 @@
-"""Authentication middleware for JWT token decoding and user lookup."""
+"""Authentication middleware for user lookup after JWT validation.
+
+JWT signature validation is handled by FastMCP's JWTVerifier.
+This middleware enriches the user context with data from DynamoDB.
+"""
 
 import logging
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-import jwt
+from fastmcp.server.dependencies import get_access_token
 from cache import user_cache
 from db import users
 from models import UserContext
@@ -22,31 +26,28 @@ class AuthMiddleware(BaseHTTPMiddleware):
         user_data = None
         user_validated = False
 
-        auth_header = request.headers.get("Authorization")
-        if auth_header:
-            try:
-                scheme, token = auth_header.split()
-                if scheme.lower() == "bearer":
-                    decoded_token = jwt.decode(
-                        token, options={"verify_signature": False}
-                    )
-                    user_id = decoded_token.get("sub")
-                    email = decoded_token.get("email")
+        # Get validated access token from FastMCP auth
+        try:
+            access_token = get_access_token()
+            if access_token and access_token.claims:
+                user_id = access_token.claims.get("sub")
+                email = access_token.claims.get("email")
 
-                    user_data = user_cache.get(user_id)
-                    if user_data is None:
-                        try:
-                            user_data = users.get_user(user_id)
-                            if user_data:
-                                user_cache.set(user_id, user_data)
-                        except Exception as e:
-                            logger.error(
-                                f"Error retrieving user from DynamoDB: {str(e)}"
-                            )
+                # Look up user in DynamoDB
+                user_data = user_cache.get(user_id)
+                if user_data is None:
+                    try:
+                        user_data = users.get_user(user_id)
+                        if user_data:
+                            user_cache.set(user_id, user_data)
+                    except Exception as e:
+                        logger.error(
+                            f"Error retrieving user from DynamoDB: {str(e)}"
+                        )
 
-                    user_validated = user_data is not None
-            except (ValueError, jwt.DecodeError) as e:
-                logger.debug(f"Auth failed: {str(e)}")
+                user_validated = user_data is not None
+        except Exception as e:
+            logger.debug(f"Auth context retrieval failed: {str(e)}")
 
         user_context = UserContext(
             user_id=user_id,

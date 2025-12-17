@@ -11,6 +11,7 @@ from tools import GetMemoryTool, StoreMemoryTool, DeleteMemoryTool, ListMemories
 from resources import DateTimeResource
 from starlette.middleware.cors import CORSMiddleware
 from middleware import AuthMiddleware
+from auth import get_jwt_verifier
 import logging
 
 logging.basicConfig(
@@ -77,8 +78,9 @@ def get_available_resources() -> List[Resource]:
 def create_mcp_server() -> FastMCP:
     """Create and configure the MCP server."""
     logger.info("Creating MCP server instance")
-    # Enable stateless_http for Lambda deployment to handle multiple invocations
-    mcp = FastMCP("example-mcp-server", stateless_http=True)
+    
+    # Enable stateless_http for Lambda deployment with JWT auth
+    mcp = FastMCP("example-mcp-server", stateless_http=True, auth=get_jwt_verifier())
     tool_service = ToolService()
     resource_service = ResourceService()
 

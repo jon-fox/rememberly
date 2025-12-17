@@ -90,14 +90,13 @@ resource "aws_apigatewayv2_integration" "user_service" {
   payload_format_version = "2.0"
 }
 
-# Route for user creation - JWT auth required
+# Route for user creation
+# No API Gateway authorization - validation happens in Lambda if needed
 resource "aws_apigatewayv2_route" "user_service_post" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "POST /users"
   
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  target             = "integrations/${aws_apigatewayv2_integration.user_service.id}"
+  target = "integrations/${aws_apigatewayv2_integration.user_service.id}"
 }
 
 # Lambda permission for API Gateway

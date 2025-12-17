@@ -21,15 +21,3 @@ variable "mcp_image_version" {
     type        = string
     default     = "1"
 }
-
-variable "supabase_anon_key" {
-    description = "Supabase anonymous (public) API key"
-    type        = string
-    sensitive   = true
-}
-
-variable "supabase_service_role_key" {
-    description = "Supabase service role (admin) API key"
-    type        = string
-    sensitive   = true
-}

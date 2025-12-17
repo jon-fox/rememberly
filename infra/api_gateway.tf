@@ -1,10 +1,11 @@
-# HTTP API Gateway for MCP server with Supabase JWT authentication
+# HTTP API Gateway for MCP server
+# JWT authentication is handled by FastMCP JWTVerifier in the Lambda function
 
 # HTTP API
 resource "aws_apigatewayv2_api" "mcp" {
   name          = "rememberly-mcp-api"
   protocol_type = "HTTP"
-  description   = "MCP HTTP API with Supabase JWT authentication"
+  description   = "MCP HTTP API - JWT validation handled by FastMCP in Lambda"
 
   cors_configuration {
     allow_origins     = ["https://${local.domain_name}", "https://${local.www_domain}", "http://localhost:3000"]
@@ -22,19 +23,6 @@ resource "aws_apigatewayv2_api" "mcp" {
   }
 }
 
-# JWT authorizer for Supabase
-resource "aws_apigatewayv2_authorizer" "jwt" {
-  api_id           = aws_apigatewayv2_api.mcp.id
-  authorizer_type  = "JWT"
-  identity_sources = ["$request.header.Authorization"]
-  name             = "supabase-jwt-authorizer"
-
-  jwt_configuration {
-    audience = ["authenticated"]
-    issuer   = "${local.supabase_url}/auth/v1"
-  }
-}
-
 # Lambda integration
 resource "aws_apigatewayv2_integration" "lambda" {
   api_id           = aws_apigatewayv2_api.mcp.id
@@ -45,24 +33,22 @@ resource "aws_apigatewayv2_integration" "lambda" {
 
 # Route for MCP endpoint - handles JSON-RPC requests
 # MCP clients POST JSON-RPC messages to /mcp with method field specifying the tool/resource/prompt
+# Authentication is handled by FastMCP JWTVerifier in Lambda
 resource "aws_apigatewayv2_route" "mcp_post" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "POST /mcp"
   
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 # Route for SSE stream - allows MCP clients to receive server-initiated messages
 # Optional GET endpoint for Server-Sent Events if needed
+# Authentication is handled by FastMCP JWTVerifier in Lambda
 resource "aws_apigatewayv2_route" "mcp_get" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "GET /mcp"
   
-  authorization_type = "JWT"
-  authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
-  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 # Stage
@@ -83,7 +69,6 @@ resource "aws_apigatewayv2_stage" "prod" {
       protocol       = "$context.protocol"
       responseLength = "$context.responseLength"
       errorMessage   = "$context.error.message"
-      authorizerError = "$context.authorizer.error"
     })
   }
 
