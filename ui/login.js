@@ -6,7 +6,7 @@ async function createUserInDatabase(user, accessToken, username = null) {
     console.log('Username parameter:', username);
     
     try {
-        const apiEndpoint = 'https://mcp.rememberly.app/users';
+        const apiEndpoint = 'https://mcp.rememberly.xyz/users';
         const payload = {
             user_id: user.id,
             email: user.email,

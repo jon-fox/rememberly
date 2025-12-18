@@ -12,7 +12,7 @@ async function ensureUserInDatabase(user, accessToken) {
     console.log('Has token:', !!accessToken);
     
     try {
-        const apiEndpoint = 'https://mcp.rememberly.app/users';
+        const apiEndpoint = 'https://mcp.rememberly.xyz/users';
         const payload = {
             user_id: user.id,
             email: user.email,
