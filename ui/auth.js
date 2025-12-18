@@ -3,6 +3,7 @@
 
 // Create Supabase client
 let supabaseClient = null;
+let supabaseInitialized = false;
 
 // Get configuration
 function getSupabaseConfig() {
@@ -23,6 +24,10 @@ function getSupabaseConfig() {
 
 // Initialize Supabase client
 function initSupabase() {
+    if (supabaseInitialized) {
+        return supabaseClient;
+    }
+    
     if (typeof supabase === 'undefined') {
         console.error('Supabase library not loaded. Please include the Supabase CDN script.');
         return null;
@@ -38,6 +43,7 @@ function initSupabase() {
     }
     
     supabaseClient = supabase.createClient(config.url, config.anonKey);
+    supabaseInitialized = true;
     console.log('Supabase client initialized');
     return supabaseClient;
 }
@@ -151,6 +157,11 @@ async function updateUserMetadata(metadata) {
 
 // Check if user is authenticated
 async function isAuthenticated() {
+    // Ensure client is initialized
+    if (!supabaseClient && typeof initSupabase === 'function') {
+        initSupabase();
+    }
+    
     const session = await getCurrentSession();
     return session !== null;
 }
@@ -171,10 +182,15 @@ async function requireAuth(redirectUrl = 'login.html') {
     return true;
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize immediately (don't wait for DOMContentLoaded)
+if (typeof supabase !== 'undefined') {
     initSupabase();
-});
+} else {
+    // If Supabase library isn't loaded yet, initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        initSupabase();
+    });
+}
 
 // Export functions for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {

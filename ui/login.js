@@ -54,6 +54,14 @@ async function createUserInDatabase(user, accessToken, username = null) {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('=== LOGIN PAGE LOADED ===');
     
+    // Ensure Supabase is initialized
+    if (!supabaseClient) {
+        initSupabase();
+    }
+    
+    // Wait a moment for session to stabilize (important for OAuth redirects)
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     // Get redirect URL from query params
     const urlParams = new URLSearchParams(window.location.search);
     const redirectUrl = urlParams.get('redirect') || 'index.html';

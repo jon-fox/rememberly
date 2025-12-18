@@ -58,6 +58,14 @@ async function ensureUserInDatabase(user, accessToken) {
 async function initAuth() {
     console.log('=== INDEX PAGE: initAuth called ===');
     
+    // Ensure Supabase is initialized
+    if (!supabaseClient) {
+        initSupabase();
+    }
+    
+    // Wait a moment for session to stabilize
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     // Check if user is authenticated (optional, no redirect)
     const authenticated = await isAuthenticated();
     console.log('Is authenticated:', authenticated);
