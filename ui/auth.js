@@ -9,6 +9,8 @@ let supabaseInitialized = false;
 function getSupabaseConfig() {
     // Try to get from config.js if available
     if (typeof CONFIG !== 'undefined' && CONFIG.supabase) {
+        console.log('Using CONFIG from config.js:', CONFIG.supabase.url);
+        console.log('Has key:', !!CONFIG.supabase.anonKey);
         return CONFIG.supabase;
     }
     
