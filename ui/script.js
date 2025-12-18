@@ -181,23 +181,6 @@ async function handleSignOut() {
     }
 }
 
-// Listen for auth state changes
-onAuthStateChange((event, session) => {
-    console.log('Auth state changed:', event);
-    
-    if (event === 'SIGNED_OUT') {
-        window.location.href = 'login.html';
-    } else if (event === 'SIGNED_IN') {
-        currentUser = session?.user;
-        if (currentUser) {
-            userMenu.style.display = 'flex';
-            signInBtn.style.display = 'none';
-            userEmail.textContent = currentUser.email;
-            loadMemories();
-        }
-    }
-});
-
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize DOM elements
@@ -230,6 +213,24 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'subscribe.html';
         });
     }
+    
+    // Listen for auth state changes (after DOM elements are initialized)
+    onAuthStateChange((event, session) => {
+        console.log('Auth state changed:', event);
+        
+        // Only redirect on explicit sign out, not on initial load
+        if (event === 'SIGNED_OUT' && currentUser !== null) {
+            window.location.href = 'login.html';
+        } else if (event === 'SIGNED_IN') {
+            currentUser = session?.user;
+            if (currentUser && userMenu && signInBtn && userEmail) {
+                userMenu.style.display = 'flex';
+                signInBtn.style.display = 'none';
+                userEmail.textContent = currentUser.email;
+                loadMemories();
+            }
+        }
+    });
     
     // Initialize authentication
     initAuth();
