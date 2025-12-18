@@ -2,13 +2,8 @@
 let memories = [];
 let currentUser = null;
 
-const memoryInput = document.getElementById('memoryInput');
-const saveButton = document.getElementById('saveButton');
-const memoryList = document.getElementById('memoryList');
-const userMenu = document.getElementById('userMenu');
-const userEmail = document.getElementById('userEmail');
-const signOutBtn = document.getElementById('signOutBtn');
-const signInBtn = document.getElementById('signInBtn');
+// DOM elements - will be initialized after DOM loads
+let memoryInput, saveButton, memoryList, userMenu, userEmail, signOutBtn, signInBtn;
 
 // Create user in DynamoDB via API - ensures user exists in database
 async function ensureUserInDatabase(user, accessToken) {
@@ -203,29 +198,39 @@ onAuthStateChange((event, session) => {
     }
 });
 
-// Event listeners
-saveButton.addEventListener('click', addMemory);
-
-memoryInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        addMemory();
-    }
-});
-
-signOutBtn.addEventListener('click', handleSignOut);
-
-signInBtn.addEventListener('click', () => {
-    window.location.href = 'login.html';
-});
-
-const subscribeBtn = document.getElementById('subscribeBtn');
-if (subscribeBtn) {
-    subscribeBtn.addEventListener('click', () => {
-        window.location.href = 'subscribe.html';
-    });
-}
-
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize DOM elements
+    memoryInput = document.getElementById('memoryInput');
+    saveButton = document.getElementById('saveButton');
+    memoryList = document.getElementById('memoryList');
+    userMenu = document.getElementById('userMenu');
+    userEmail = document.getElementById('userEmail');
+    signOutBtn = document.getElementById('signOutBtn');
+    signInBtn = document.getElementById('signInBtn');
+    
+    // Event listeners
+    saveButton.addEventListener('click', addMemory);
+
+    memoryInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            addMemory();
+        }
+    });
+
+    signOutBtn.addEventListener('click', handleSignOut);
+
+    signInBtn.addEventListener('click', () => {
+        window.location.href = 'login.html';
+    });
+
+    const subscribeBtn = document.getElementById('subscribeBtn');
+    if (subscribeBtn) {
+        subscribeBtn.addEventListener('click', () => {
+            window.location.href = 'subscribe.html';
+        });
+    }
+    
+    // Initialize authentication
     initAuth();
 });
