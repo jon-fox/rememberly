@@ -23,14 +23,19 @@ def set_user_context(user_context: UserContext) -> None:
 
 
 def require_auth(func):
-    """Decorator to require authenticated user for tool execution."""
+    """Decorator to require authenticated user for tool execution.
+    
+    Validates that the user has a valid JWT token with an email address.
+    Email is used as the primary validation key since it's unique and
+    always present in Supabase JWT tokens.
+    """
 
     @wraps(func)
     async def wrapper(*args, **kwargs):
         user_context = get_user_context()
         if not user_context.is_authenticated:
             return ToolResponse.from_text(
-                "Error: Authentication required. User does not exist or is not validated."
+                "Error: Authentication required. Please ensure you have a valid JWT token."
             )
         return await func(*args, **kwargs)
 
