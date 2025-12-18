@@ -6,7 +6,7 @@ const CONFIG = {
     // Supabase Configuration
     supabase: {
         url: 'https://ijyyifghxitisjbfnoxb.supabase.co',
-        anonKey: '***REMOVED***'
+        anonKey: 'sb_publishable_xNN6yDcX7ChQS6Nng3yGwA_kPdpeO9C'
     },
     
     // App Configuration

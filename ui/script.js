@@ -214,6 +214,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Ensure Supabase is initialized first
+    if (!supabaseClient) {
+        initSupabase();
+    }
+    
     // Listen for auth state changes (after DOM elements are initialized)
     onAuthStateChange((event, session) => {
         console.log('Auth state changed:', event);

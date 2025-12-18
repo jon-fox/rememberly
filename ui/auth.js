@@ -42,9 +42,17 @@ function initSupabase() {
         return null;
     }
     
-    supabaseClient = supabase.createClient(config.url, config.anonKey);
+    supabaseClient = supabase.createClient(config.url, config.anonKey, {
+        auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: true,
+            storage: window.localStorage,
+            storageKey: 'rememberly-auth-token'
+        }
+    });
     supabaseInitialized = true;
-    console.log('Supabase client initialized');
+    console.log('Supabase client initialized with persistent session storage');
     return supabaseClient;
 }
 
