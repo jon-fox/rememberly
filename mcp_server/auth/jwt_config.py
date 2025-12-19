@@ -1,32 +1,60 @@
 """OAuth 2.1 authentication configuration for Supabase Platform."""
 
-from fastmcp.server.auth import RemoteAuthProvider
+import os
+from fastmcp.server.auth import OAuthProxy
 from fastmcp.server.auth.providers.jwt import JWTVerifier
-from pydantic import AnyHttpUrl
 
 
-def get_oauth_config() -> RemoteAuthProvider:
+def get_oauth_config() -> OAuthProxy:
     """Create and configure OAuth authentication for Supabase Platform.
     
-    Uses RemoteAuthProvider to integrate with Supabase Platform OAuth.
-    Validates JWT tokens issued by Supabase and manages OAuth authorization flow.
+    Uses OAuthProxy to proxy OAuth flow through our server to Supabase Platform.
+    Hosts /authorize and /token endpoints that forward to Supabase.
+    Validates JWT tokens issued by Supabase.
     Supports PKCE for public clients (desktop apps, web apps).
     
     Returns:
-        RemoteAuthProvider: Configured OAuth provider with JWT validation
+        OAuthProxy: Configured OAuth proxy with JWT validation
     """
+    # Get Supabase OAuth client credentials from environment
+    client_id = os.getenv("SUPABASE_CLIENT_ID", "060c7631-e70d-4b24-afed-145c72e7da21")
+    client_secret = os.getenv("SUPABASE_CLIENT_SECRET", "")  # Public client, may be empty
+    
     # Configure JWT token verification for Supabase Platform tokens
     token_verifier = JWTVerifier(
         jwks_uri="https://api.supabase.com/.well-known/jwks.json",
         issuer="https://api.supabase.com",
-        # Supabase OAuth tokens use the client_id as audience
-        audience="060c7631-e70d-4b24-afed-145c72e7da21",
+        audience=client_id,
         algorithm="RS256"
     )
     
-    # Create remote auth provider for Supabase Platform OAuth
-    return RemoteAuthProvider(
+    # Create OAuth proxy that hosts auth endpoints and forwards to Supabase
+    return OAuthProxy(
+        # Supabase Platform OAuth endpoints
+        upstream_authorization_endpoint="https://api.supabase.com/v1/oauth/authorize",
+        upstream_token_endpoint="https://api.supabase.com/v1/oauth/token",
+        
+        # Your Supabase OAuth client credentials
+        upstream_client_id=client_id,
+        upstream_client_secret=client_secret,
+        
+        # Token validation
         token_verifier=token_verifier,
-        authorization_servers=[AnyHttpUrl("https://api.supabase.com")],
+        
+        # Your FastMCP server's public URL (without /mcp - that's set in http_app path)
         base_url="https://mcp.rememberly.xyz",
+        
+        # OAuth callback path (default is /auth/callback)
+        redirect_path="/oauth/callback",
+        
+        # Forward PKCE to upstream (Supabase supports it)
+        forward_pkce=True,
+        
+        # Allow Claude.ai redirect URIs in addition to localhost
+        allowed_client_redirect_uris=[
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            "https://claude.ai/api/mcp/auth_callback",
+            "https://claude.com/api/mcp/auth_callback",
+        ],
     )

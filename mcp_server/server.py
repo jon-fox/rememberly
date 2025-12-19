@@ -79,8 +79,8 @@ def create_mcp_server() -> FastMCP:
     """Create and configure the MCP server."""
     logger.info("Creating MCP server instance")
     
-    # Enable stateless_http for Lambda deployment with OAuth authorization
-    mcp = FastMCP("rememberly", stateless_http=True, auth=get_oauth_config())
+    # Create MCP server with OAuth authorization
+    mcp = FastMCP("rememberly", auth=get_oauth_config())
     tool_service = ToolService()
     resource_service = ResourceService()
 
@@ -102,7 +102,10 @@ def create_http_app():
     """Create a FastMCP HTTP app with CORS and Auth middleware."""
     mcp_server = create_mcp_server()
 
-    app = mcp_server.http_app()  # type: ignore[attr-defined]
+    # Create HTTP app with /mcp path for MCP endpoints
+    # OAuth endpoints will be at root level: /authorize, /token, /oauth/callback
+    # stateless_http=True for Lambda deployment (no session state)
+    app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
     app.add_middleware(AuthMiddleware)
     app.add_middleware(
         CORSMiddleware,
