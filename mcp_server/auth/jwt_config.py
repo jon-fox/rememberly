@@ -3,6 +3,7 @@
 import os
 from fastmcp.server.auth import OAuthProxy
 from fastmcp.server.auth.providers.jwt import JWTVerifier
+from key_value.aio.stores.memory import MemoryStore
 
 
 def get_oauth_config() -> OAuthProxy:
@@ -58,4 +59,8 @@ def get_oauth_config() -> OAuthProxy:
             "https://claude.ai/api/mcp/auth_callback",
             "https://claude.com/api/mcp/auth_callback",
         ],
+        
+        # Use in-memory storage for Lambda (filesystem is read-only except /tmp)
+        # Client registrations will be lost on cold start, but that's acceptable
+        client_storage=MemoryStore(),
     )
