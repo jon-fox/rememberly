@@ -1,8 +1,8 @@
-"""Authentication middleware for user lookup after JWT validation.
+"""Authentication middleware for user lookup after OAuth validation.
 
-JWT signature validation is handled by FastMCP's JWTVerifier.
+OAuth token validation is handled by FastMCP's OAuth authorization server config.
 This middleware enriches the user context with data from DynamoDB.
-Users are validated based on email from JWT (which is unique and always present).
+Users are validated based on email from OAuth token claims.
 """
 
 import logging
@@ -27,15 +27,15 @@ class AuthMiddleware(BaseHTTPMiddleware):
         user_data = None
         user_validated = False
 
-        # Get validated access token from FastMCP auth
+        # Get validated access token from FastMCP OAuth
         try:
             access_token = get_access_token()
             if access_token and access_token.claims:
                 user_id = access_token.claims.get("sub")
                 email = access_token.claims.get("email")
 
-                # User is validated if they have a valid JWT with email
-                # Email is unique and guaranteed to be in the JWT token
+                # User is validated if they have a valid OAuth token with email
+                # Email is unique and present in the OAuth token claims
                 user_validated = email is not None
 
                 # Optionally look up user data in DynamoDB for additional context

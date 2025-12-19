@@ -29,7 +29,7 @@ echo "Pushing image to ECR..."
 docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
 docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
 
-echo "✓ Image pushed successfully!"
+echo "Image pushed successfully!"
 echo "Image URI: ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
 echo ""
 echo "To deploy with Terraform, run:"
