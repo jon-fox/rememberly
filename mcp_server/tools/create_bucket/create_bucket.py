@@ -52,7 +52,10 @@ class CreateBucketTool(Tool):
                 message="Bucket name cannot be empty",
             )
             return ToolResponse(
-                success=False, output=output.model_dump(), error="Invalid bucket name", metadata=None
+                success=False,
+                output=output.model_dump(),
+                error="Invalid bucket name",
+                metadata=None,
             )
 
         # Check if bucket already exists by looking for any keys with this bucket
@@ -69,11 +72,14 @@ class CreateBucketTool(Tool):
             # Create a metadata entry for the bucket
             # This ensures the bucket shows up even with no memories
             bucket_meta_key = f"{bucket_name}:__bucket_meta__info"
-            self._storage.put(bucket_meta_key, {
-                "bucket_name": bucket_name,
-                "description": input_data.description or "",
-                "created": True,
-            })
+            self._storage.put(
+                bucket_meta_key,
+                {
+                    "bucket_name": bucket_name,
+                    "description": input_data.description or "",
+                    "created": True,
+                },
+            )
 
             output = CreateBucketOutput(
                 success=True,

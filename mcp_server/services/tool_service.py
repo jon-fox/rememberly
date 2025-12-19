@@ -24,7 +24,7 @@ def set_user_context(user_context: UserContext) -> None:
 
 def require_auth(func):
     """Decorator to require authenticated user for tool execution.
-    
+
     Validates that the user has a valid OAuth token with an email address.
     Email is used as the primary validation key since it's unique and
     always present in OAuth token claims.

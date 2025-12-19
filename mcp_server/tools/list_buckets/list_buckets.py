@@ -34,7 +34,7 @@ class ListBucketsTool(Tool):
 
     def _parse_storage_key(self, storage_key: str) -> tuple[str, str]:
         """Parse a storage key into bucket and key.
-        
+
         Format: bucket:key
         """
         parts = storage_key.split(":", 1)

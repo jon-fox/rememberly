@@ -22,9 +22,7 @@ class DeleteBucketInput(BaseToolInput):
         }
     )
 
-    name: str = Field(
-        description="The name of the bucket to delete"
-    )
+    name: str = Field(description="The name of the bucket to delete")
     force: bool = Field(
         default=False,
         description="If true, delete the bucket even if it contains memories. If false, only delete empty buckets.",
@@ -51,5 +49,7 @@ class DeleteBucketOutput(BaseModel):
     success: bool = Field(description="Whether the operation completed successfully")
     bucket_name: str = Field(description="The name of the bucket")
     deleted: bool = Field(description="Whether the bucket was actually deleted")
-    memories_deleted: int = Field(description="Number of memories that were deleted with the bucket")
+    memories_deleted: int = Field(
+        description="Number of memories that were deleted with the bucket"
+    )
     message: str = Field(description="Status message about the operation")

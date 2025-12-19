@@ -62,14 +62,13 @@ class DeleteBucketTool(Tool):
                 success=False,
                 output=output.model_dump(),
                 error="Cannot delete default bucket",
-                metadata=None
+                metadata=None,
             )
 
         # Find all keys in this bucket
         all_keys = self._storage.keys()
         bucket_keys = [
-            key for key in all_keys
-            if self._parse_storage_key(key)[0] == bucket_name
+            key for key in all_keys if self._parse_storage_key(key)[0] == bucket_name
         ]
 
         # Check if bucket exists
@@ -84,10 +83,7 @@ class DeleteBucketTool(Tool):
             return ToolResponse.from_model(output)
 
         # Count non-metadata memories
-        memory_keys = [
-            key for key in bucket_keys
-            if "__bucket_meta__" not in key
-        ]
+        memory_keys = [key for key in bucket_keys if "__bucket_meta__" not in key]
 
         # Check if bucket has memories and force is not set
         if memory_keys and not input_data.force:
@@ -102,7 +98,7 @@ class DeleteBucketTool(Tool):
                 success=False,
                 output=output.model_dump(),
                 error="Bucket not empty",
-                metadata=None
+                metadata=None,
             )
 
         # Delete all keys in the bucket

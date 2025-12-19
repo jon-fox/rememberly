@@ -89,7 +89,9 @@ class GetMetricsOutput(BaseModel):
     )
 
     total_buckets: int = Field(description="Total number of buckets")
-    total_memories: int = Field(description="Total number of memories across all buckets")
+    total_memories: int = Field(
+        description="Total number of memories across all buckets"
+    )
     total_size_bytes: int = Field(description="Total size of all memories in bytes")
     bucket_metrics: List[BucketMetrics] = Field(
         description="Metrics for each bucket (or single bucket if filtered)"
@@ -98,4 +100,3 @@ class GetMetricsOutput(BaseModel):
         default=None,
         description="Detailed information about each memory (if include_memory_details=true)",
     )
-

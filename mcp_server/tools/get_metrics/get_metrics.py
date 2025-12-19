@@ -45,7 +45,7 @@ class GetMetricsTool(Tool):
         """Get the approximate size of a value in bytes."""
         try:
             if isinstance(value, str):
-                return len(value.encode('utf-8'))
+                return len(value.encode("utf-8"))
             elif isinstance(value, (dict, list)):
                 return sys.getsizeof(str(value))
             else:
@@ -67,23 +67,23 @@ class GetMetricsTool(Tool):
 
         # Organize data by bucket
         bucket_data: Dict[str, List[tuple[str, Any]]] = {}
-        
+
         for storage_key in all_keys:
             bucket, key = self._parse_storage_key(storage_key)
-            
+
             # Skip bucket metadata entries
             if key.startswith("__bucket_meta__"):
                 continue
-            
+
             # Filter by bucket if specified
             if input_data.bucket and bucket != input_data.bucket:
                 continue
-            
+
             stored_data = self._storage.get(storage_key)
-            
+
             if bucket not in bucket_data:
                 bucket_data[bucket] = []
-            
+
             bucket_data[bucket].append((key, stored_data))
 
         # Calculate metrics for each bucket
@@ -101,7 +101,11 @@ class GetMetricsTool(Tool):
                 total_memories += 1
 
                 # Get value and calculate size
-                value = stored_data.get("value") if isinstance(stored_data, dict) else stored_data
+                value = (
+                    stored_data.get("value")
+                    if isinstance(stored_data, dict)
+                    else stored_data
+                )
                 size = self._get_value_size(value)
                 bucket_size += size
                 total_size_bytes += size
@@ -110,7 +114,7 @@ class GetMetricsTool(Tool):
                 if isinstance(stored_data, dict) and "metadata" in stored_data:
                     metadata = stored_data["metadata"]
                     stored_at = metadata.get("stored_at")
-                    
+
                     if stored_at:
                         if oldest_timestamp is None or stored_at < oldest_timestamp:
                             oldest_timestamp = stored_at
@@ -144,7 +148,9 @@ class GetMetricsTool(Tool):
             total_memories=total_memories,
             total_size_bytes=total_size_bytes,
             bucket_metrics=bucket_metrics_list,
-            memory_details=memory_details_list if input_data.include_memory_details else None,
+            memory_details=(
+                memory_details_list if input_data.include_memory_details else None
+            ),
         )
 
         return ToolResponse.from_model(output)

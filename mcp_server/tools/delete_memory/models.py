@@ -47,5 +47,7 @@ class DeleteMemoryOutput(BaseModel):
 
     success: bool = Field(description="Whether the operation completed successfully")
     key: str = Field(description="The key that was requested for deletion")
-    deleted: bool = Field(description="Whether the memory was actually deleted (false if not found)")
+    deleted: bool = Field(
+        description="Whether the memory was actually deleted (false if not found)"
+    )
     message: str = Field(description="Status message about the operation")
