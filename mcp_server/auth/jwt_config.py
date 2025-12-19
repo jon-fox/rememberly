@@ -41,8 +41,9 @@ def get_oauth_config() -> OAuthProxy:
         # Token validation
         token_verifier=token_verifier,
         
-        # Your FastMCP server's public URL (without /mcp - that's set in http_app path)
-        base_url="https://mcp.rememberly.xyz",
+        # Your FastMCP server's public URL (includes /mcp mount prefix)
+        # OAuth endpoints will be at: /mcp/authorize, /mcp/token, /mcp/oauth/callback
+        base_url="https://mcp.rememberly.xyz/mcp",
         
         # OAuth callback path (default is /auth/callback)
         redirect_path="/oauth/callback",
