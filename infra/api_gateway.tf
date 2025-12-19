@@ -51,11 +51,17 @@ resource "aws_apigatewayv2_route" "mcp_get" {
   target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
-# OAuth and MCP routes handled by FastMCP in Lambda
-# With base_url=https://mcp.rememberly.xyz and path="/mcp":
-# - OAuth endpoints at root: /authorize, /token, /oauth/callback, /.well-known/oauth-authorization-server
-# - MCP operational endpoint: /mcp (for JSON-RPC messages)
-# Lambda Web Adapter routes all requests to the FastMCP app which handles routing internally
+# Catch-all route under /mcp for OAuth and discovery endpoints
+# With base_url="https://mcp.rememberly.xyz/mcp", FastMCP serves:
+# - /mcp/authorize, /mcp/token, /mcp/oauth/callback (OAuth endpoints)
+# - /mcp/.well-known/* (discovery endpoints)
+# This proxy route catches all other requests under /mcp/{proxy+}
+resource "aws_apigatewayv2_route" "mcp_proxy" {
+  api_id    = aws_apigatewayv2_api.mcp.id
+  route_key = "ANY /mcp/{proxy+}"
+  
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
 
 # Stage
 resource "aws_apigatewayv2_stage" "prod" {
