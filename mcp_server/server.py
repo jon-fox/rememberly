@@ -1,18 +1,30 @@
 """Rememberly MCP Server - Context and Chat History Management."""
 
-from fastmcp import FastMCP
-
-from typing import List
-from interfaces.tool import Tool
-from interfaces.resource import Resource
-from services.tool_service import ToolService
-from services.resource_service import ResourceService
-from tools import GetMemoryTool, StoreMemoryTool, DeleteMemoryTool, ListMemoriesTool, ListBucketsTool, CreateBucketTool, DeleteBucketTool, GetMetricsTool
-from resources import DateTimeResource
-from starlette.middleware.cors import CORSMiddleware
-from middleware import AuthMiddleware
-from auth import get_oauth_config
 import logging
+from typing import List
+
+from fastmcp import FastMCP
+from starlette.applications import Starlette
+from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Mount
+
+from auth import get_oauth_config
+from interfaces.resource import Resource
+from interfaces.tool import Tool
+from middleware import AuthMiddleware
+from resources import DateTimeResource
+from services.resource_service import ResourceService
+from services.tool_service import ToolService
+from tools import (
+    CreateBucketTool,
+    DeleteBucketTool,
+    DeleteMemoryTool,
+    GetMemoryTool,
+    GetMetricsTool,
+    ListBucketsTool,
+    ListMemoriesTool,
+    StoreMemoryTool,
+)
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -99,22 +111,40 @@ def create_mcp_server() -> FastMCP:
 
 
 def create_http_app():
-    """Create a FastMCP HTTP app with CORS and Auth middleware."""
+    """Create a FastMCP HTTP app with CORS and Auth middleware using Starlette routing.
+    
+    This setup follows the FastMCP pattern for OAuth-protected servers:
+    - Well-known discovery routes at root level (path-aware)
+    - OAuth and MCP operational endpoints under /mcp mount prefix
+    """
     mcp_server = create_mcp_server()
-
-    # Create HTTP app - base_url already includes /mcp so all endpoints are under that path
-    # MCP operational endpoint: /mcp, OAuth endpoints: /mcp/authorize, /mcp/token, /mcp/oauth/callback
+    oauth_config = get_oauth_config()
+    
+    # Create MCP app with /mcp path for operational endpoint
     # stateless_http=True for Lambda deployment (no session state)
-    app = mcp_server.http_app(stateless_http=True)  # type: ignore[attr-defined]
-    app.add_middleware(AuthMiddleware)
-    app.add_middleware(
+    mcp_app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
+    mcp_app.add_middleware(AuthMiddleware)
+    mcp_app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
         allow_methods=["*"],
         allow_headers=["*"],
         allow_credentials=True,
     )
-
+    
+    # Get well-known discovery routes for root level
+    # These provide OAuth metadata at /.well-known/oauth-authorization-server/mcp
+    well_known_routes = oauth_config.get_well_known_routes(mcp_path="/mcp")
+    
+    # Assemble Starlette app with proper routing
+    app = Starlette(
+        routes=[
+            *well_known_routes,  # Discovery routes at root
+            Mount("/mcp", app=mcp_app),  # OAuth and MCP under /mcp
+        ],
+        lifespan=mcp_app.lifespan,
+    )
+    
     return app
 
 
