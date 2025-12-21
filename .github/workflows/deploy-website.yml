@@ -37,6 +37,12 @@ jobs:
             --delete \
             --exclude ".git/*" \
             --exclude ".DS_Store" \
+            --exclude "**/oauth/consent" \
+            --cache-control "public, max-age=3600"
+          
+          # Upload OAuth consent page with correct content type (no .html extension)
+          aws s3 cp ui/**/oauth/consent s3://${{ vars.S3_WEBSITE_BUCKET_NAME }}/**/oauth/consent \
+            --content-type "text/html; charset=utf-8" \
             --cache-control "public, max-age=3600"
 
       - name: Invalidate CloudFront cache
