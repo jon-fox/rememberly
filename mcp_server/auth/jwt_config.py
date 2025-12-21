@@ -1,8 +1,10 @@
 """OAuth 2.1 authentication configuration for Supabase Platform."""
 
 import os
+from pathlib import Path
 from fastmcp.server.auth import OAuthProxy
 from fastmcp.server.auth.providers.jwt import JWTVerifier
+from key_value.aio.stores.disk import DiskStore
 
 
 def get_oauth_config() -> OAuthProxy:
@@ -54,4 +56,6 @@ def get_oauth_config() -> OAuthProxy:
             "https://claude.ai/api/mcp/auth_callback",
             "https://claude.com/api/mcp/auth_callback",
         ],
+        # Use /tmp for Lambda - only writable directory
+        client_storage=DiskStore(directory=Path("/tmp/oauth-proxy")),
     )
