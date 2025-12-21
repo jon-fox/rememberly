@@ -5,6 +5,19 @@ let currentUser = null;
 // DOM elements - will be initialized after DOM loads
 let memoryInput, saveButton, memoryList, userMenu, userEmail, signOutBtn, signInBtn;
 
+// Check if we're on an OAuth consent path and redirect to the consent page
+function checkOAuthConsent() {
+    const path = window.location.pathname;
+    const params = window.location.search;
+    
+    // If path contains /oauth/consent, redirect to the consent page
+    if (path.includes('/oauth/consent') || params.includes('authorization_id=')) {
+        window.location.href = '/oauth-consent.html' + params;
+        return true;
+    }
+    return false;
+}
+
 // Create user in DynamoDB via API - ensures user exists in database
 async function ensureUserInDatabase(user, accessToken) {
     console.log('>>>>> ensureUserInDatabase CALLED <<<<<');
@@ -183,6 +196,11 @@ async function handleSignOut() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Check if this is an OAuth consent request
+    if (checkOAuthConsent()) {
+        return; // Stop execution and let the redirect happen
+    }
+    
     // Initialize DOM elements
     memoryInput = document.getElementById('memoryInput');
     saveButton = document.getElementById('saveButton');
