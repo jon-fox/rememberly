@@ -51,14 +51,23 @@ resource "aws_apigatewayv2_route" "mcp_get" {
   target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
-# Catch-all route under /mcp for OAuth and discovery endpoints
+# Catch-all route under /mcp for OAuth endpoints
 # With base_url="https://mcp.rememberly.xyz/mcp", FastMCP serves:
 # - /mcp/authorize, /mcp/token, /mcp/oauth/callback (OAuth endpoints)
-# - /mcp/.well-known/* (discovery endpoints)
 # This proxy route catches all other requests under /mcp/{proxy+}
 resource "aws_apigatewayv2_route" "mcp_proxy" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "ANY /mcp/{proxy+}"
+  
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# Well-known discovery endpoints at root level
+# OAuth RFC 8414 requires discovery metadata at /.well-known/oauth-authorization-server/*
+# FastMCP serves path-aware discovery at /.well-known/oauth-authorization-server/mcp
+resource "aws_apigatewayv2_route" "well_known" {
+  api_id    = aws_apigatewayv2_api.mcp.id
+  route_key = "GET /.well-known/{proxy+}"
   
   target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
