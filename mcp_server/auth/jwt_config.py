@@ -1,4 +1,4 @@
-"""OAuth 2.1 authentication configuration for Supabase Platform."""
+"""OAuth 2.1 authentication configuration for Supabase Auth."""
 
 import os
 from pathlib import Path
@@ -8,38 +8,36 @@ from key_value.aio.stores.disk import DiskStore
 
 
 def get_oauth_config() -> OAuthProxy:
-    """Create and configure OAuth authentication for Supabase Platform.
+    """Create and configure OAuth authentication for Supabase Auth.
 
-    Uses OAuthProxy to proxy OAuth flow through our server to Supabase Platform.
+    Uses OAuthProxy to proxy OAuth flow through our server to Supabase Auth.
     Hosts /authorize and /token endpoints that forward to Supabase.
-    Validates JWT tokens issued by Supabase.
+    Validates JWT tokens issued by Supabase Auth.
     Supports PKCE for public clients (desktop apps, web apps).
 
     Returns:
         OAuthProxy: Configured OAuth proxy with JWT validation
     """
-    # Get Supabase OAuth client credentials from environment
-    client_id = os.getenv("SUPABASE_CLIENT_ID", "060c7631-e70d-4b24-afed-145c72e7da21")
-    client_secret = os.getenv(
-        "SUPABASE_CLIENT_SECRET", ""
-    )  # Public client, may be empty
-
-    # Configure JWT token verification for Supabase Platform tokens
+    # Supabase project URL and credentials
+    supabase_url = os.getenv("SUPABASE_URL", "https://ijyyifghxitisjbfnoxb.supabase.co")
+    supabase_anon_key = os.getenv("SUPABASE_ANON_KEY", "")
+    
+    # Configure JWT token verification for Supabase Auth tokens
     token_verifier = JWTVerifier(
-        jwks_uri="https://api.supabase.com/.well-known/jwks.json",
-        issuer="https://api.supabase.com",
-        audience=client_id,
+        jwks_uri=f"{supabase_url}/auth/v1/.well-known/jwks.json",
+        issuer=f"{supabase_url}/auth/v1",
+        audience="authenticated",
         algorithm="RS256",
     )
 
-    # Create OAuth proxy that hosts auth endpoints and forwards to Supabase
+    # Create OAuth proxy that hosts auth endpoints and forwards to Supabase Auth
     return OAuthProxy(
-        # Supabase Platform OAuth endpoints
-        upstream_authorization_endpoint="https://api.supabase.com/v1/oauth/authorize",
-        upstream_token_endpoint="https://api.supabase.com/v1/oauth/token",
-        # Your Supabase OAuth client credentials
-        upstream_client_id=client_id,
-        upstream_client_secret=client_secret,
+        # Supabase Auth OAuth endpoints
+        upstream_authorization_endpoint=f"{supabase_url}/auth/v1/authorize",
+        upstream_token_endpoint=f"{supabase_url}/auth/v1/token",
+        # Supabase project credentials (anon key acts as client_id for public clients)
+        upstream_client_id=supabase_anon_key,
+        upstream_client_secret="",  # Public client, no secret needed
         # Token validation
         token_verifier=token_verifier,
         # Your FastMCP server's public URL (includes /mcp mount prefix)
