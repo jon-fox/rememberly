@@ -152,9 +152,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/config.js"></script>
     <script src="/auth.js"></script>
-    <script type="module">
+    <script>
         let authorizationId = null;
-        let clientInfo = null;
+        const SUPABASE_URL = 'https://ijyyifghxitisjbfnoxb.supabase.co';
 
         async function loadAuthorizationRequest() {
             try {
@@ -175,33 +175,13 @@
                 
                 if (userError || !user) {
                     // Redirect to login with return URL
-                    window.location.href = `login.html?redirect=${encodeURIComponent(window.location.href)}`;
+                    window.location.href = `/oauth/login.html?redirect=${encodeURIComponent(window.location.href)}`;
                     return;
                 }
 
                 document.getElementById('user-email').textContent = user.email;
 
-                // Fetch authorization details from Supabase
-                const { data: authData, error: authError } = await supabaseClient
-                    .from('oauth_authorizations')
-                    .select('*')
-                    .eq('id', authorizationId)
-                    .single();
-
-                if (authError) {
-                    console.error('Error fetching authorization:', authError);
-                    showError('Invalid authorization request');
-                    return;
-                }
-
-                clientInfo = authData;
-                
-                // Update UI with client info
-                if (authData.client_name) {
-                    document.getElementById('client-name').textContent = authData.client_name;
-                }
-
-                // Show the consent form
+                // Show the consent form (user is authenticated)
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('consent-form').style.display = 'block';
 
@@ -221,19 +201,19 @@
 
         window.approveAuthorization = async function() {
             try {
-                // Call Supabase to approve the authorization
-                const { data, error } = await supabaseClient.rpc('approve_oauth_authorization', {
-                    authorization_id: authorizationId
-                });
-
-                if (error) throw error;
-
-                // Redirect back to the redirect URI with the authorization code
-                if (data?.redirect_uri) {
-                    window.location.href = data.redirect_uri;
-                } else {
-                    showError('Authorization approved but redirect failed');
+                // Get the session token
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                if (!session) {
+                    showError('Not authenticated');
+                    return;
                 }
+
+                // Redirect to Supabase OAuth authorize endpoint to complete the flow
+                // Supabase will handle the approval and redirect back to the client
+                const approveUrl = `${SUPABASE_URL}/auth/v1/authorize?authorization_id=${authorizationId}`;
+                window.location.href = approveUrl;
+
             } catch (err) {
                 console.error('Error approving authorization:', err);
                 showError('Failed to approve authorization');
@@ -242,19 +222,10 @@
 
         window.denyAuthorization = async function() {
             try {
-                // Call Supabase to deny the authorization
-                const { data, error } = await supabaseClient.rpc('deny_oauth_authorization', {
-                    authorization_id: authorizationId
-                });
+                // Redirect to Supabase OAuth deny endpoint
+                const denyUrl = `${SUPABASE_URL}/auth/v1/authorize?authorization_id=${authorizationId}&deny=true`;
+                window.location.href = denyUrl;
 
-                if (error) throw error;
-
-                // Redirect back with error
-                if (data?.redirect_uri) {
-                    window.location.href = data.redirect_uri;
-                } else {
-                    window.location.href = 'index.html';
-                }
             } catch (err) {
                 console.error('Error denying authorization:', err);
                 showError('Failed to deny authorization');
