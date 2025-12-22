@@ -201,18 +201,31 @@
 
         window.approveAuthorization = async function() {
             try {
-                // Get the session token
-                const { data: { session } } = await supabaseClient.auth.getSession();
+                // Simply redirect back with consent=true query parameter
+                // Supabase OAuth Server will handle the rest
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('consent', 'true');
                 
-                if (!session) {
-                    showError('Not authenticated');
-                    return;
-                }
-
-                // Redirect to Supabase OAuth authorize endpoint to complete the flow
-                // Supabase will handle the approval and redirect back to the client
-                const approveUrl = `${SUPABASE_URL}/auth/v1/authorize?authorization_id=${authorizationId}`;
-                window.location.href = approveUrl;
+                // Redirect to Supabase to complete authorization
+                const authorizeUrl = `${SUPABASE_URL}/auth/v1/authorize/consent`;
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = authorizeUrl;
+                
+                const authIdInput = document.createElement('input');
+                authIdInput.type = 'hidden';
+                authIdInput.name = 'authorization_id';
+                authIdInput.value = authorizationId;
+                form.appendChild(authIdInput);
+                
+                const consentInput = document.createElement('input');
+                consentInput.type = 'hidden';
+                consentInput.name = 'consent';
+                consentInput.value = 'true';
+                form.appendChild(consentInput);
+                
+                document.body.appendChild(form);
+                form.submit();
 
             } catch (err) {
                 console.error('Error approving authorization:', err);
@@ -222,9 +235,26 @@
 
         window.denyAuthorization = async function() {
             try {
-                // Redirect to Supabase OAuth deny endpoint
-                const denyUrl = `${SUPABASE_URL}/auth/v1/authorize?authorization_id=${authorizationId}&deny=true`;
-                window.location.href = denyUrl;
+                // Redirect back with consent=false
+                const authorizeUrl = `${SUPABASE_URL}/auth/v1/authorize/consent`;
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = authorizeUrl;
+                
+                const authIdInput = document.createElement('input');
+                authIdInput.type = 'hidden';
+                authIdInput.name = 'authorization_id';
+                authIdInput.value = authorizationId;
+                form.appendChild(authIdInput);
+                
+                const consentInput = document.createElement('input');
+                consentInput.type = 'hidden';
+                consentInput.name = 'consent';
+                consentInput.value = 'false';
+                form.appendChild(consentInput);
+                
+                document.body.appendChild(form);
+                form.submit();
 
             } catch (err) {
                 console.error('Error denying authorization:', err);
