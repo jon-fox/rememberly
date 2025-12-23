@@ -201,60 +201,52 @@
 
         window.approveAuthorization = async function() {
             try {
-                // Simply redirect back with consent=true query parameter
-                // Supabase OAuth Server will handle the rest
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.set('consent', 'true');
+                // Get the current session to include in authorization
+                const { data: { session } } = await supabaseClient.auth.getSession();
                 
-                // Redirect to Supabase to complete authorization
-                const authorizeUrl = `${SUPABASE_URL}/auth/v1/authorize/consent`;
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = authorizeUrl;
+                if (!session?.access_token) {
+                    showError('Not authenticated');
+                    return;
+                }
+
+                // POST to Supabase's authorize endpoint with the access token
+                const authorizeUrl = `${SUPABASE_URL}/auth/v1/authorize`;
                 
-                const authIdInput = document.createElement('input');
-                authIdInput.type = 'hidden';
-                authIdInput.name = 'authorization_id';
-                authIdInput.value = authorizationId;
-                form.appendChild(authIdInput);
+                const response = await fetch(authorizeUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({
+                        authorization_id: authorizationId
+                    })
+                });
+
+                const data = await response.json();
                 
-                const consentInput = document.createElement('input');
-                consentInput.type = 'hidden';
-                consentInput.name = 'consent';
-                consentInput.value = 'true';
-                form.appendChild(consentInput);
-                
-                document.body.appendChild(form);
-                form.submit();
+                if (!response.ok) {
+                    throw new Error(data.msg || 'Authorization failed');
+                }
+
+                // Redirect to the redirect_uri with the authorization code
+                if (data.redirect_uri) {
+                    window.location.href = data.redirect_uri;
+                } else {
+                    showError('Authorization approved but no redirect URL received');
+                }
 
             } catch (err) {
                 console.error('Error approving authorization:', err);
-                showError('Failed to approve authorization');
+                showError(err.message || 'Failed to approve authorization');
             }
         };
 
         window.denyAuthorization = async function() {
             try {
-                // Redirect back with consent=false
-                const authorizeUrl = `${SUPABASE_URL}/auth/v1/authorize/consent`;
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = authorizeUrl;
-                
-                const authIdInput = document.createElement('input');
-                authIdInput.type = 'hidden';
-                authIdInput.name = 'authorization_id';
-                authIdInput.value = authorizationId;
-                form.appendChild(authIdInput);
-                
-                const consentInput = document.createElement('input');
-                consentInput.type = 'hidden';
-                consentInput.name = 'consent';
-                consentInput.value = 'false';
-                form.appendChild(consentInput);
-                
-                document.body.appendChild(form);
-                form.submit();
+                // Get the authorization_id and construct error redirect
+                // For denial, we just redirect back to home or close the window
+                window.location.href = '/';
 
             } catch (err) {
                 console.error('Error denying authorization:', err);
