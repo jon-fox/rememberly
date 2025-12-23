@@ -201,7 +201,7 @@
 
         window.approveAuthorization = async function() {
             try {
-                // Get the current session to include in authorization
+                // Get the current session to verify authentication
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 
                 if (!session?.access_token) {
@@ -209,32 +209,10 @@
                     return;
                 }
 
-                // POST to Supabase's authorize endpoint with the access token
-                const authorizeUrl = `${SUPABASE_URL}/auth/v1/authorize`;
-                
-                const response = await fetch(authorizeUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`
-                    },
-                    body: JSON.stringify({
-                        authorization_id: authorizationId
-                    })
-                });
-
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.msg || 'Authorization failed');
-                }
-
-                // Redirect to the redirect_uri with the authorization code
-                if (data.redirect_uri) {
-                    window.location.href = data.redirect_uri;
-                } else {
-                    showError('Authorization approved but no redirect URL received');
-                }
+                // Simply redirect to Supabase's authorize endpoint with the authorization_id
+                // Supabase will complete the OAuth flow and redirect back to the client
+                const authorizeUrl = `${SUPABASE_URL}/auth/v1/authorize?authorization_id=${authorizationId}`;
+                window.location.href = authorizeUrl;
 
             } catch (err) {
                 console.error('Error approving authorization:', err);
@@ -244,9 +222,9 @@
 
         window.denyAuthorization = async function() {
             try {
-                // Get the authorization_id and construct error redirect
-                // For denial, we just redirect back to home or close the window
-                window.location.href = '/';
+                // Redirect to authorize endpoint with error=access_denied
+                const denyUrl = `${SUPABASE_URL}/auth/v1/authorize?authorization_id=${authorizationId}&error=access_denied`;
+                window.location.href = denyUrl;
 
             } catch (err) {
                 console.error('Error denying authorization:', err);
