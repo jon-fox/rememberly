@@ -292,6 +292,12 @@
                     showError('Not authenticated');
                     return;
                 }
+
+                // Get the provider from session if we don't have it
+                if (!authProvider) {
+                    authProvider = session.user?.app_metadata?.provider || 'email';
+                }
+                
                 // Clear session storage
                 sessionStorage.removeItem('oauth_authorization_id');
                 sessionStorage.removeItem('oauth_provider');
@@ -299,12 +305,6 @@
                 // Redirect to Supabase's authorize endpoint with authorization_id AND provider
                 const authorizeUrl = `${SUPABASE_URL}/auth/v1/authorize?authorization_id=${authorizationId}&provider=${authProvider}`;
                 window.location.href = authorizeUrl;
-
-            } catch (err) {
-                console.error('Error approving authorization:', err);
-                showError(err.message || 'Failed to approve authorization');
-            }
-        };      window.location.href = authorizeUrl;
 
             } catch (err) {
                 console.error('Error approving authorization:', err);
