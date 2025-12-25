@@ -14,14 +14,17 @@ def get_oauth_config() -> SupabaseProvider:
     Requirements:
     1. Enable "Supabase OAuth Server" in dashboard
     2. Enable "Allow Dynamic OAuth Apps" for MCP client registration
-    3. Set Authorization Path to /oauth/consent (already configured)
+    3. Set Authorization Path to /oauth/consent in Supabase dashboard
+    4. Host consent page at https://rememberly.xyz/oauth/consent
 
     Returns:
         SupabaseProvider: Configured Supabase authentication
     """
     supabase_url = os.getenv("SUPABASE_URL", "https://ijyyifghxitisjbfnoxb.supabase.co")
+    base_url = os.getenv("BASE_URL", "https://mcp.rememberly.xyz")
     
     return SupabaseProvider(
         project_url=supabase_url,
-        base_url="https://mcp.rememberly.xyz",
+        base_url=base_url,
+        authorization_path="/oauth/consent",  # Consent page hosted on main website
     )

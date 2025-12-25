@@ -16,11 +16,16 @@
                 <p class="tagline">Your AI-powered memory companion</p>
             </header>
 
+            <!-- Loading State -->
+            <div id="loading" style="text-align: center; padding: 40px;">
+                <p>Verifying authorization...</p>
+            </div>
+
             <!-- Unauthenticated State: Show Sign In/Sign Up -->
             <div id="auth-section" style="display: none;">
                 <div class="consent-header" style="text-align: center; margin-bottom: 30px;">
-                    <h2 style="font-size: 20px; margin-bottom: 10px;">Authorize Claude</h2>
-                    <p style="color: #666;"><strong>Claude</strong> wants to access your Rememberly account</p>
+                    <h2 style="font-size: 20px; margin-bottom: 10px;">Authorize Application</h2>
+                    <p style="color: #666;"><strong id="client-name">An application</strong> wants to access your Rememberly account</p>
                 </div>
 
                 <div class="consent-info" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
@@ -103,8 +108,8 @@
             <div id="consent-section" style="display: none;">
                 <div style="text-align: center; margin-bottom: 30px;">
                     <div style="width: 64px; height: 64px; margin: 0 auto 20px; background: #f0f0f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px;">🤖</div>
-                    <h2 style="font-size: 20px; margin-bottom: 10px;">Authorize Claude</h2>
-                    <p style="color: #666;"><strong>Claude</strong> wants to access your Rememberly account</p>
+                    <h2 style="font-size: 20px; margin-bottom: 10px;">Authorize Application</h2>
+                    <p style="color: #666;"><strong id="consent-client-name">An application</strong> wants to access your Rememberly account</p>
                 </div>
 
                 <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: #e7f3ff; border-radius: 8px; font-size: 14px;">
@@ -128,11 +133,6 @@
                     <button class="auth-button" style="flex: 1;" onclick="approveAuthorization()">Approve</button>
                 </div>
             </div>
-
-            <!-- Loading State -->
-            <div id="loading" style="text-align: center; padding: 40px;">
-                <p>Loading...</p>
-            </div>
         </div>
     </div>
 
@@ -140,29 +140,65 @@
     <script src="/config.js"></script>
     <script src="/auth.js"></script>
     <script>
-        let authorizationId = null;
-        let authProvider = null; // Track which provider the user authenticated with
         const SUPABASE_URL = 'https://ijyyifghxitisjbfnoxb.supabase.co';
+        let supabaseClient;
+        let oauthParams = {};
+
+        // Initialize Supabase client
+        function initializeSupabase() {
+            const config = typeof CONFIG !== 'undefined' ? CONFIG.supabase : {
+                url: SUPABASE_URL,
+                anonKey: localStorage.getItem('supabase_anon_key') || ''
+            };
+
+            if (!config.anonKey) {
+                showError('Supabase configuration missing. Please configure your anon key.');
+                return false;
+            }
+
+            supabaseClient = supabase.createClient(config.url, config.anonKey, {
+                auth: {
+                    autoRefreshToken: true,
+                    persistSession: true,
+                    detectSessionInUrl: true
+                }
+            });
+
+            return true;
+        }
 
         async function loadAuthorizationRequest() {
             try {
                 // Initialize Supabase
-                initSupabase();
-
-                // Get authorization_id from URL or session storage (after OAuth redirect)
-                const params = new URLSearchParams(window.location.search);
-                authorizationId = params.get('authorization_id') || sessionStorage.getItem('oauth_authorization_id');
-
-                if (!authorizationId) {
-                    showError('Missing authorization ID');
+                if (!initializeSupabase()) {
                     return;
                 }
+
+                // Parse OAuth parameters from URL
+                const params = new URLSearchParams(window.location.search);
                 
-                // Get provider from session storage if available
-                const storedProvider = sessionStorage.getItem('oauth_provider');
-                if (storedProvider) {
-                    authProvider = storedProvider;
-                }
+                // Supabase OAuth Server sends these parameters:
+                // - client_id: The MCP client's ID
+                // - redirect_uri: Where to send the user back
+                // - scope: Requested scopes
+                // - state: CSRF protection
+                // - code_challenge: PKCE challenge
+                // - code_challenge_method: Usually S256
+                
+                oauthParams = {
+                    client_id: params.get('client_id'),
+                    redirect_uri: params.get('redirect_uri'),
+                    scope: params.get('scope'),
+                    state: params.get('state'),
+                    code_challenge: params.get('code_challenge'),
+                    code_challenge_method: params.get('code_challenge_method'),
+                    response_type: params.get('response_type') || 'code'
+                };
+
+                // Display client name if available
+                const clientName = params.get('client_name') || 'An application';
+                document.getElementById('client-name').textContent = clientName;
+                document.getElementById('consent-client-name').textContent = clientName;
 
                 // Check if user is already authenticated
                 const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
@@ -170,15 +206,12 @@
                 if (user) {
                     // User is authenticated - show consent section
                     document.getElementById('user-email').textContent = user.email;
-                    
-                    // Get the provider from user metadata
-                    const { data: { session } } = await supabaseClient.auth.getSession();
-                    authProvider = session?.user?.app_metadata?.provider || 'email';
-                    
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('consent-section').style.display = 'block';
                 } else {
                     // User is not authenticated - show auth section
+                    // Store OAuth params in session storage for after authentication
+                    sessionStorage.setItem('oauth_params', JSON.stringify(oauthParams));
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('auth-section').style.display = 'block';
                 }
@@ -195,17 +228,21 @@
                 errorDiv.textContent = message;
                 errorDiv.style.display = 'block';
             }
+            const loginError = document.getElementById('loginError');
+            if (loginError) {
+                loginError.textContent = message;
+            }
             document.getElementById('loading').style.display = 'none';
         }
 
         // Handle email/password login
         document.addEventListener('DOMContentLoaded', () => {
             const loginForm = document.getElementById('loginForm');
-            const loginError = document.getElementById('loginError');
             
             if (loginForm) {
                 loginForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
+                    const loginError = document.getElementById('loginError');
                     if (loginError) loginError.textContent = '';
 
                     const email = document.getElementById('loginEmail').value;
@@ -219,8 +256,7 @@
 
                         if (error) throw error;
 
-                        // Set provider and reload to show consent
-                        authProvider = 'email';
+                        // Reload to show consent screen
                         window.location.reload();
 
                     } catch (error) {
@@ -230,23 +266,21 @@
                 });
             }
 
-            // OAuth buttons
-            const googleBtn = document.getElementById('googleSignIn');
-            const githubBtn = document.getElementById('githubSignIn');
+            // OAuth buttons - redirect back to consent page after OAuth
+            const consentUrl = window.location.href.split('?')[0];
             
+            const googleBtn = document.getElementById('googleSignIn');
             if (googleBtn) {
                 googleBtn.addEventListener('click', async () => {
                     try {
-                        // Store authorization_id in session storage before OAuth redirect
-                        if (authorizationId) {
-                            sessionStorage.setItem('oauth_authorization_id', authorizationId);
-                            sessionStorage.setItem('oauth_provider', 'google');
-                        }
+                        // Store OAuth params for after redirect
+                        const params = new URLSearchParams(window.location.search);
+                        sessionStorage.setItem('oauth_params', JSON.stringify(Object.fromEntries(params)));
                         
                         const { data, error } = await supabaseClient.auth.signInWithOAuth({
                             provider: 'google',
                             options: {
-                                redirectTo: window.location.href.split('?')[0] // Base URL without query params
+                                redirectTo: consentUrl
                             }
                         });
                         if (error) throw error;
@@ -257,19 +291,18 @@
                 });
             }
             
+            const githubBtn = document.getElementById('githubSignIn');
             if (githubBtn) {
                 githubBtn.addEventListener('click', async () => {
                     try {
-                        // Store authorization_id in session storage before OAuth redirect
-                        if (authorizationId) {
-                            sessionStorage.setItem('oauth_authorization_id', authorizationId);
-                            sessionStorage.setItem('oauth_provider', 'github');
-                        }
+                        // Store OAuth params for after redirect
+                        const params = new URLSearchParams(window.location.search);
+                        sessionStorage.setItem('oauth_params', JSON.stringify(Object.fromEntries(params)));
                         
                         const { data, error } = await supabaseClient.auth.signInWithOAuth({
                             provider: 'github',
                             options: {
-                                redirectTo: window.location.href.split('?')[0] // Base URL without query params
+                                redirectTo: consentUrl
                             }
                         });
                         if (error) throw error;
@@ -278,6 +311,14 @@
                         showError('Failed to sign in with GitHub');
                     }
                 });
+            }
+
+            // Restore OAuth params from session storage if coming back from OAuth login
+            const storedParams = sessionStorage.getItem('oauth_params');
+            if (storedParams && !window.location.search) {
+                const params = JSON.parse(storedParams);
+                const query = new URLSearchParams(params).toString();
+                window.history.replaceState({}, '', `${window.location.pathname}?${query}`);
             }
 
             // Load the authorization request
@@ -292,19 +333,21 @@
                     showError('Not authenticated');
                     return;
                 }
-
-                // Get the provider from session if we don't have it
-                if (!authProvider) {
-                    authProvider = session.user?.app_metadata?.provider || 'email';
-                }
                 
                 // Clear session storage
-                sessionStorage.removeItem('oauth_authorization_id');
-                sessionStorage.removeItem('oauth_provider');
+                sessionStorage.removeItem('oauth_params');
                 
-                // Redirect to Supabase's authorize endpoint with authorization_id AND provider
-                const authorizeUrl = `${SUPABASE_URL}/auth/v1/authorize?authorization_id=${authorizationId}&provider=${authProvider}`;
-                window.location.href = authorizeUrl;
+                // Build the authorization URL back to Supabase
+                // Supabase will handle the OAuth flow and redirect to the client
+                const authorizeUrl = new URL(`${SUPABASE_URL}/auth/v1/authorize`);
+                
+                // Add all OAuth parameters
+                Object.entries(oauthParams).forEach(([key, value]) => {
+                    if (value) authorizeUrl.searchParams.append(key, value);
+                });
+                
+                // Redirect to complete OAuth flow
+                window.location.href = authorizeUrl.toString();
 
             } catch (err) {
                 console.error('Error approving authorization:', err);
@@ -312,10 +355,22 @@
             }
         };
 
-        window.denyAuthorization = async function() {
+        window.denyAuthorization = function() {
             try {
-                const denyUrl = `${SUPABASE_URL}/auth/v1/authorize?authorization_id=${authorizationId}&error=access_denied`;
-                window.location.href = denyUrl;
+                sessionStorage.removeItem('oauth_params');
+                
+                // Build denial URL
+                const denyUrl = new URL(`${SUPABASE_URL}/auth/v1/authorize`);
+                if (oauthParams.redirect_uri) {
+                    denyUrl.searchParams.append('redirect_uri', oauthParams.redirect_uri);
+                }
+                if (oauthParams.state) {
+                    denyUrl.searchParams.append('state', oauthParams.state);
+                }
+                denyUrl.searchParams.append('error', 'access_denied');
+                denyUrl.searchParams.append('error_description', 'User denied authorization');
+                
+                window.location.href = denyUrl.toString();
             } catch (err) {
                 console.error('Error denying authorization:', err);
                 showError('Failed to deny authorization');
