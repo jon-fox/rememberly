@@ -149,13 +149,19 @@
                 // Initialize Supabase
                 initSupabase();
 
-                // Get authorization_id from URL
+                // Get authorization_id from URL or session storage (after OAuth redirect)
                 const params = new URLSearchParams(window.location.search);
-                authorizationId = params.get('authorization_id');
+                authorizationId = params.get('authorization_id') || sessionStorage.getItem('oauth_authorization_id');
 
                 if (!authorizationId) {
                     showError('Missing authorization ID');
                     return;
+                }
+                
+                // Get provider from session storage if available
+                const storedProvider = sessionStorage.getItem('oauth_provider');
+                if (storedProvider) {
+                    authProvider = storedProvider;
                 }
 
                 // Check if user is already authenticated
@@ -231,11 +237,16 @@
             if (googleBtn) {
                 googleBtn.addEventListener('click', async () => {
                     try {
-                        authProvider = 'google';
+                        // Store authorization_id in session storage before OAuth redirect
+                        if (authorizationId) {
+                            sessionStorage.setItem('oauth_authorization_id', authorizationId);
+                            sessionStorage.setItem('oauth_provider', 'google');
+                        }
+                        
                         const { data, error } = await supabaseClient.auth.signInWithOAuth({
                             provider: 'google',
                             options: {
-                                redirectTo: window.location.href
+                                redirectTo: window.location.href.split('?')[0] // Base URL without query params
                             }
                         });
                         if (error) throw error;
@@ -249,11 +260,16 @@
             if (githubBtn) {
                 githubBtn.addEventListener('click', async () => {
                     try {
-                        authProvider = 'github';
+                        // Store authorization_id in session storage before OAuth redirect
+                        if (authorizationId) {
+                            sessionStorage.setItem('oauth_authorization_id', authorizationId);
+                            sessionStorage.setItem('oauth_provider', 'github');
+                        }
+                        
                         const { data, error } = await supabaseClient.auth.signInWithOAuth({
                             provider: 'github',
                             options: {
-                                redirectTo: window.location.href
+                                redirectTo: window.location.href.split('?')[0] // Base URL without query params
                             }
                         });
                         if (error) throw error;
@@ -276,15 +292,19 @@
                     showError('Not authenticated');
                     return;
                 }
-
-                // Get the provider from session if we don't have it
-                if (!authProvider) {
-                    authProvider = session.user?.app_metadata?.provider || 'email';
-                }
-
+                // Clear session storage
+                sessionStorage.removeItem('oauth_authorization_id');
+                sessionStorage.removeItem('oauth_provider');
+                
                 // Redirect to Supabase's authorize endpoint with authorization_id AND provider
                 const authorizeUrl = `${SUPABASE_URL}/auth/v1/authorize?authorization_id=${authorizationId}&provider=${authProvider}`;
                 window.location.href = authorizeUrl;
+
+            } catch (err) {
+                console.error('Error approving authorization:', err);
+                showError(err.message || 'Failed to approve authorization');
+            }
+        };      window.location.href = authorizeUrl;
 
             } catch (err) {
                 console.error('Error approving authorization:', err);
