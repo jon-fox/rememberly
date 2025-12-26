@@ -50,6 +50,13 @@ resource "aws_apigatewayv2_route" "mcp_proxy" {
   target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
+resource "aws_apigatewayv2_route" "well_known" {
+  api_id    = aws_apigatewayv2_api.mcp.id
+  route_key = "GET /.well-known/{proxy+}"
+  
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
 # Stage
 resource "aws_apigatewayv2_stage" "prod" {
   api_id      = aws_apigatewayv2_api.mcp.id
