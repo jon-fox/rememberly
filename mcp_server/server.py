@@ -8,7 +8,6 @@ from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount
 
-from auth import get_oauth_config
 from interfaces.resource import Resource
 from interfaces.tool import Tool
 from middleware import AuthMiddleware
@@ -91,12 +90,10 @@ def create_mcp_server() -> FastMCP:
     """Create and configure the MCP server."""
     logger.info("Creating MCP server instance")
 
-    # Create MCP server with OAuth authorization
-    mcp = FastMCP("rememberly", auth=get_oauth_config())
+    mcp = FastMCP("rememberly")
     tool_service = ToolService()
     resource_service = ResourceService()
 
-    # Register all tools and their MCP handlers
     logger.info("Registering tools and MCP handlers")
     tool_service.register_tools(get_available_tools())
     tool_service.register_mcp_handlers(mcp)
@@ -111,17 +108,9 @@ def create_mcp_server() -> FastMCP:
 
 
 def create_http_app():
-    """Create a FastMCP HTTP app with CORS and Auth middleware using Starlette routing.
-
-    This setup follows the FastMCP pattern for OAuth-protected servers:
-    - Well-known discovery routes at root level (path-aware)
-    - OAuth and MCP operational endpoints under /mcp mount prefix
-    """
+    """Create a FastMCP HTTP app with CORS and Auth middleware."""
     mcp_server = create_mcp_server()
-    oauth_config = get_oauth_config()
 
-    # Create MCP app with /mcp path for operational endpoint
-    # stateless_http=True for Lambda deployment (no session state)
     mcp_app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
     mcp_app.add_middleware(AuthMiddleware)
     mcp_app.add_middleware(
@@ -132,15 +121,9 @@ def create_http_app():
         allow_credentials=True,
     )
 
-    # Get well-known discovery routes for root level
-    # These provide OAuth metadata at /.well-known/oauth-authorization-server/mcp
-    well_known_routes = oauth_config.get_well_known_routes(mcp_path="/mcp")
-
-    # Assemble Starlette app with proper routing
     app = Starlette(
         routes=[
-            *well_known_routes,  # Discovery routes at root
-            Mount("/mcp", app=mcp_app),  # OAuth and MCP under /mcp
+            Mount("/mcp", app=mcp_app),
         ],
         lifespan=mcp_app.lifespan,
     )

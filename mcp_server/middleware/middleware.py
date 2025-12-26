@@ -1,8 +1,7 @@
-"""Authentication middleware for user lookup after OAuth validation.
+"""Authentication middleware for user lookup and validation.
 
-OAuth token validation is handled by FastMCP's OAuth authorization server config.
 This middleware enriches the user context with data from DynamoDB.
-Users are validated based on email from OAuth token claims.
+Users are validated based on email from access token claims.
 """
 
 import logging
@@ -27,19 +26,13 @@ class AuthMiddleware(BaseHTTPMiddleware):
         user_data = None
         user_validated = False
 
-        # Get validated access token from FastMCP OAuth
         try:
             access_token = get_access_token()
             if access_token and access_token.claims:
                 user_id = access_token.claims.get("sub")
                 email = access_token.claims.get("email")
-
-                # User is validated if they have a valid OAuth token with email
-                # Email is unique and present in the OAuth token claims
                 user_validated = email is not None
 
-                # Optionally look up user data in DynamoDB for additional context
-                # This is not required for validation
                 if user_id:
                     user_data = user_cache.get(user_id)
                     if user_data is None:

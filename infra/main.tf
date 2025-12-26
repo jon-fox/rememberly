@@ -133,22 +133,6 @@ resource "aws_cloudfront_distribution" "main" {
     origin_request_policy_id = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
   }
 
-  # OAuth consent page - don't redirect to index.html
-  ordered_cache_behavior {
-    path_pattern           = "/oauth/*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = local.s3_origin_id
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
-
-    # Use AWS managed cache policy (CachingOptimized)
-    cache_policy_id = "658327ea-f89d-4fab-a63d-7e88639e58f6"
-
-    # Use AWS managed origin request policy (CORS-S3Origin)
-    origin_request_policy_id = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
-  }
-
   # Custom error response for SPA routing
   custom_error_response {
     error_code         = 404

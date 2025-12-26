@@ -1,11 +1,9 @@
 # HTTP API Gateway for MCP server
-# OAuth 2.1 authentication is handled by FastMCP in the Lambda function
 
-# HTTP API
 resource "aws_apigatewayv2_api" "mcp" {
   name          = "rememberly-mcp-api"
   protocol_type = "HTTP"
-  description   = "MCP HTTP API - OAuth 2.1 authorization handled by FastMCP in Lambda"
+  description   = "MCP HTTP API"
 
   cors_configuration {
     allow_origins     = ["https://${local.domain_name}", "https://${local.www_domain}", "http://localhost:3000"]
@@ -31,9 +29,6 @@ resource "aws_apigatewayv2_integration" "lambda" {
   payload_format_version = "2.0"
 }
 
-# Route for MCP endpoint - handles JSON-RPC requests
-# MCP clients POST JSON-RPC messages to /mcp with method field specifying the tool/resource/prompt
-# Authentication is handled by FastMCP OAuth in Lambda
 resource "aws_apigatewayv2_route" "mcp_post" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "POST /mcp"
@@ -41,9 +36,6 @@ resource "aws_apigatewayv2_route" "mcp_post" {
   target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
-# Route for SSE stream - allows MCP clients to receive server-initiated messages
-# Optional GET endpoint for Server-Sent Events if needed
-# Authentication is handled by FastMCP OAuth in Lambda
 resource "aws_apigatewayv2_route" "mcp_get" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "GET /mcp"
@@ -51,23 +43,9 @@ resource "aws_apigatewayv2_route" "mcp_get" {
   target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
-# Catch-all route under /mcp for OAuth endpoints
-# With base_url="https://mcp.rememberly.xyz/mcp", FastMCP serves:
-# - /mcp/authorize, /mcp/token, /mcp/oauth/callback (OAuth endpoints)
-# This proxy route catches all other requests under /mcp/{proxy+}
 resource "aws_apigatewayv2_route" "mcp_proxy" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "ANY /mcp/{proxy+}"
-  
-  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
-}
-
-# Well-known discovery endpoints at root level
-# OAuth RFC 8414 requires discovery metadata at /.well-known/oauth-authorization-server/*
-# FastMCP serves path-aware discovery at /.well-known/oauth-authorization-server/mcp
-resource "aws_apigatewayv2_route" "well_known" {
-  api_id    = aws_apigatewayv2_api.mcp.id
-  route_key = "GET /.well-known/{proxy+}"
   
   target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
