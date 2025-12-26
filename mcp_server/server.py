@@ -4,9 +4,7 @@ import logging
 from typing import List
 
 from fastmcp import FastMCP
-from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
-from starlette.routing import Mount
 
 from interfaces.resource import Resource
 from interfaces.tool import Tool
@@ -111,21 +109,14 @@ def create_http_app():
     """Create a FastMCP HTTP app with CORS and Auth middleware."""
     mcp_server = create_mcp_server()
 
-    mcp_app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
-    mcp_app.add_middleware(AuthMiddleware)
-    mcp_app.add_middleware(
+    app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
+    app.add_middleware(AuthMiddleware)
+    app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
         allow_methods=["*"],
         allow_headers=["*"],
         allow_credentials=True,
-    )
-
-    app = Starlette(
-        routes=[
-            Mount("/mcp", app=mcp_app, name="mcp"),
-        ],
-        lifespan=mcp_app.lifespan,
     )
 
     return app
