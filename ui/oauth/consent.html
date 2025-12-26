@@ -140,31 +140,21 @@
     <script src="/config.js"></script>
     <script src="/auth.js"></script>
     <script>
-        const SUPABASE_URL = 'https://ijyyifghxitisjbfnoxb.supabase.co';
-        let supabaseClient;
         let oauthParams = {};
 
-        // Initialize Supabase client
+        // Initialize Supabase client using auth.js
         function initializeSupabase() {
-            const config = typeof CONFIG !== 'undefined' ? CONFIG.supabase : {
-                url: SUPABASE_URL,
-                anonKey: localStorage.getItem('supabase_anon_key') || ''
-            };
-
-            if (!config.anonKey) {
+            const client = initSupabase();
+            if (!client) {
                 showError('Supabase configuration missing. Please configure your anon key.');
                 return false;
             }
-
-            supabaseClient = supabase.createClient(config.url, config.anonKey, {
-                auth: {
-                    autoRefreshToken: true,
-                    persistSession: true,
-                    detectSessionInUrl: true
-                }
-            });
-
             return true;
+        }
+
+        // Get the supabaseClient from auth.js
+        function getSupabaseClient() {
+            return supabaseClient || initSupabase();
         }
 
         async function loadAuthorizationRequest() {
@@ -201,7 +191,8 @@
                 document.getElementById('consent-client-name').textContent = clientName;
 
                 // Check if user is already authenticated
-                const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+                const client = getSupabaseClient();
+                const { data: { user }, error: userError } = await client.auth.getUser();
                 
                 if (user) {
                     // User is authenticated - show consent section
@@ -249,7 +240,8 @@
                     const password = document.getElementById('loginPassword').value;
 
                     try {
-                        const { data, error } = await supabaseClient.auth.signInWithPassword({
+                        const client = getSupabaseClient();
+                        const { data, error } = await client.auth.signInWithPassword({
                             email: email,
                             password: password
                         });
@@ -276,8 +268,8 @@
                         // Store OAuth params for after redirect
                         const params = new URLSearchParams(window.location.search);
                         sessionStorage.setItem('oauth_params', JSON.stringify(Object.fromEntries(params)));
-                        
-                        const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                        const client = getSupabaseClient();
+                        const { data, error } = await client.auth.signInWithOAuth({
                             provider: 'google',
                             options: {
                                 redirectTo: consentUrl
@@ -298,8 +290,8 @@
                         // Store OAuth params for after redirect
                         const params = new URLSearchParams(window.location.search);
                         sessionStorage.setItem('oauth_params', JSON.stringify(Object.fromEntries(params)));
-                        
-                        const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                        const client = getSupabaseClient();
+                        const { data, error } = await client.auth.signInWithOAuth({
                             provider: 'github',
                             options: {
                                 redirectTo: consentUrl
@@ -327,7 +319,8 @@
 
         window.approveAuthorization = async function() {
             try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
+                const client = getSupabaseClient();
+                const { data: { session } } = await client.auth.getSession();
                 
                 if (!session?.access_token) {
                     showError('Not authenticated');
@@ -339,6 +332,7 @@
                 
                 // Build the authorization URL back to Supabase
                 // Supabase will handle the OAuth flow and redirect to the client
+                const SUPABASE_URL = 'https://ijyyifghxitisjbfnoxb.supabase.co';
                 const authorizeUrl = new URL(`${SUPABASE_URL}/auth/v1/authorize`);
                 
                 // Add all OAuth parameters
@@ -360,6 +354,7 @@
                 sessionStorage.removeItem('oauth_params');
                 
                 // Build denial URL
+                const SUPABASE_URL = 'https://ijyyifghxitisjbfnoxb.supabase.co';
                 const denyUrl = new URL(`${SUPABASE_URL}/auth/v1/authorize`);
                 if (oauthParams.redirect_uri) {
                     denyUrl.searchParams.append('redirect_uri', oauthParams.redirect_uri);
