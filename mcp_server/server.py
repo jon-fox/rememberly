@@ -6,6 +6,7 @@ from typing import List
 from fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
+from auth import get_supabase_auth
 from interfaces.resource import Resource
 from interfaces.tool import Tool
 from middleware import AuthMiddleware
@@ -28,9 +29,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-mcp = FastMCP(
-    "Rememberly",
-    instructions="""
+MCP_INSTRUCTIONS = """
     Use this MCP server for managing context and chat history, including:
     - Storing and retrieving conversation context
     - Managing long-term memory across sessions
@@ -53,8 +52,7 @@ mcp = FastMCP(
     4. Maintain user preferences across sessions
 
     Always provide contextual awareness using these tools rather than relying solely on immediate conversation context.
-    """,
-)
+    """
 
 
 def get_available_tools() -> List[Tool]:
@@ -88,7 +86,11 @@ def create_mcp_server() -> FastMCP:
     """Create and configure the MCP server."""
     logger.info("Creating MCP server instance")
 
-    mcp = FastMCP("rememberly")
+    mcp = FastMCP(
+        "Rememberly",
+        auth=get_supabase_auth(),
+        instructions=MCP_INSTRUCTIONS,
+    )
     tool_service = ToolService()
     resource_service = ResourceService()
 
