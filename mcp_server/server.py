@@ -123,7 +123,7 @@ def create_http_app():
 
     app = Starlette(
         routes=[
-            Mount("/mcp", app=mcp_app),
+            Mount("/mcp", app=mcp_app, name="mcp"),
         ],
         lifespan=mcp_app.lifespan,
     )
