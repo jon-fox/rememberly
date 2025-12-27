@@ -28,4 +28,5 @@ def get_supabase_auth() -> SupabaseProvider:
     return SupabaseProvider(
         project_url=project_url,
         base_url=base_url,
+        algorithm="RS256",
     )
