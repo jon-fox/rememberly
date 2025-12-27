@@ -21,7 +21,7 @@ def get_supabase_auth() -> SupabaseProvider:
     )
     base_url = os.getenv(
         "MCP_BASE_URL",
-        "https://rememberly.xyz"
+        "https://mcp.rememberly.xyz"
     )
     
     return SupabaseProvider(
