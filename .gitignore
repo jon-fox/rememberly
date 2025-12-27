@@ -49,7 +49,6 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
-test_integration/
 
 # Hatch
 .hatch/
