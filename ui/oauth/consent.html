@@ -187,7 +187,18 @@
                 const { data: { user }, error: userError } = await client.auth.getUser();
                 
                 if (user) {
-                    // User is authenticated - show consent section
+                    // User is authenticated - get authorization details
+                    const { data: authDetails, error: authError } = await client.auth.oauth.getAuthorizationDetails(authorizationId);
+                    
+                    if (authError || !authDetails) {
+                        showError(authError?.message || 'Failed to get authorization details');
+                        return;
+                    }
+                    
+                    console.log('Authorization details:', authDetails);
+                    
+                    // Update UI with client details
+                    document.getElementById('consent-client-name').textContent = authDetails.client?.name || 'An application';
                     document.getElementById('user-email').textContent = user.email;
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('consent-section').style.display = 'block';
@@ -314,30 +325,25 @@
                 console.log('Approving with oauthParams:', oauthParams);
                 
                 const client = getSupabaseClient();
-                const { data: { session } } = await client.auth.getSession();
                 
-                if (!session?.access_token) {
-                    showError('Not authenticated');
-                    return;
+                // Use Supabase JS library to approve authorization
+                const { data, error } = await client.auth.oauth.approveAuthorization(oauthParams.authorization_id);
+                
+                if (error) {
+                    throw error;
                 }
+                
+                console.log('Authorization approved:', data);
                 
                 // Clear session storage
                 sessionStorage.removeItem('oauth_params');
                 
-                // Build the authorization URL back to Supabase
-                // Supabase will handle the OAuth flow and redirect to the client
-                const SUPABASE_URL = 'https://ijyyifghxitisjbfnoxb.supabase.co';
-                const authorizeUrl = new URL(`${SUPABASE_URL}/auth/v1/oauth/authorize`);
-                
-                // Pass authorization_id back
-                if (oauthParams.authorization_id) {
-                    authorizeUrl.searchParams.append('authorization_id', oauthParams.authorization_id);
+                // Redirect back to client with authorization code
+                if (data.redirect_to) {
+                    window.location.href = data.redirect_to;
+                } else {
+                    showError('No redirect URL provided');
                 }
-                
-                console.log('Redirecting to:', authorizeUrl.toString());
-                
-                // Redirect to complete OAuth flow
-                window.location.href = authorizeUrl.toString();
 
             } catch (err) {
                 console.error('Error approving authorization:', err);
@@ -345,26 +351,31 @@
             }
         };
 
-        window.denyAuthorization = function() {
+        window.denyAuthorization = async function() {
             try {
+                const client = getSupabaseClient();
+                
+                // Use Supabase JS library to deny authorization
+                const { data, error } = await client.auth.oauth.denyAuthorization(oauthParams.authorization_id);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                console.log('Authorization denied:', data);
+                
+                // Clear session storage
                 sessionStorage.removeItem('oauth_params');
                 
-                // Build denial URL
-                const SUPABASE_URL = 'https://ijyyifghxitisjbfnoxb.supabase.co';
-                const denyUrl = new URL(`${SUPABASE_URL}/auth/v1/authorize`);
-                if (oauthParams.redirect_uri) {
-                    denyUrl.searchParams.append('redirect_uri', oauthParams.redirect_uri);
+                // Redirect back to client with error
+                if (data.redirect_to) {
+                    window.location.href = data.redirect_to;
+                } else {
+                    showError('No redirect URL provided');
                 }
-                if (oauthParams.state) {
-                    denyUrl.searchParams.append('state', oauthParams.state);
-                }
-                denyUrl.searchParams.append('error', 'access_denied');
-                denyUrl.searchParams.append('error_description', 'User denied authorization');
-                
-                window.location.href = denyUrl.toString();
             } catch (err) {
                 console.error('Error denying authorization:', err);
-                showError('Failed to deny authorization');
+                showError(err.message || 'Failed to deny authorization');
             }
         };
     </script>
