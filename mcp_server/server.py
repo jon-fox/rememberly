@@ -91,6 +91,11 @@ def create_mcp_server() -> FastMCP:
         auth=get_supabase_auth(),
         instructions=MCP_INSTRUCTIONS,
     )
+    
+    # Add middleware to MCP server
+    logger.info("Adding authentication middleware")
+    mcp.add_middleware(AuthMiddleware())
+    
     tool_service = ToolService()
     resource_service = ResourceService()
 
@@ -130,7 +135,8 @@ def create_http_app():
         lifespan=mcp_app.lifespan,
     )
 
-    app.add_middleware(AuthMiddleware)
+    # Only add CORS middleware at the Starlette level
+    # Auth middleware is added directly to the MCP server
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],

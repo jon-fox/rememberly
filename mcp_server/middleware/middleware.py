@@ -5,8 +5,9 @@ Users are validated based on email from access token claims.
 """
 
 import logging
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
+import json
+from typing import Any
+from fastmcp.server.middleware import Middleware, MiddlewareContext, CallNext
 from fastmcp.server.dependencies import get_access_token
 from cache import user_cache
 from db import users
@@ -16,31 +17,21 @@ from services.tool_service import set_user_context
 logger = logging.getLogger(__name__)
 
 
-class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        if request.url.path in ["/health", "/healthz", "/"]:
-            return await call_next(request)
+class AuthMiddleware(Middleware):
+    """FastMCP middleware for authentication and user context enrichment."""
 
-        # Log incoming request details
-        auth_header = request.headers.get("authorization", "")
-        has_bearer = auth_header.startswith("Bearer ")
-
-        # Get request body if available
-        body_bytes = await request.body()
-        request_body = body_bytes.decode() if body_bytes else None
-
-        # Rebuild request with body for downstream processing
-        async def receive():
-            return {"type": "http.request", "body": body_bytes}
-
-        request._receive = receive
-
-        logger.info(
-            f"Request: {request.method} {request.url.path} | Auth header present: {bool(auth_header)} | Bearer token: {has_bearer}"
-        )
-        logger.info(f"Request body: {request_body}")
-        if has_bearer:
-            logger.info(f"Full Bearer token: {auth_header}")
+    async def on_message(self, context: MiddlewareContext, call_next: CallNext) -> Any:
+        """Log all MCP messages and enrich user context."""
+        
+        # Log the incoming request
+        logger.info(f"Processing {context.method} from {context.source}")
+        
+        # Log the full request payload
+        try:
+            request_json = json.dumps(context.request, indent=2)
+            logger.info(f"Request payload: {request_json}")
+        except Exception as e:
+            logger.warning(f"Could not serialize request: {e}")
 
         user_id = None
         email = None
@@ -82,7 +73,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
             user_validated=user_validated,
         )
 
-        request.state.user_context = user_context
         set_user_context(user_context)
-
-        return await call_next(request)
+        
+        result = await call_next(context)
+        
+        logger.info(f"Completed {context.method}")
+        return result
