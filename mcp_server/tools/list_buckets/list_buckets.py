@@ -74,6 +74,4 @@ class ListBucketsTool(Tool):
             total_buckets=len(buckets),
         )
 
-        return ToolResponse(
-            success=True, output=output.model_dump(), error=None, metadata=None
-        )
+        return ToolResponse.from_model(output)

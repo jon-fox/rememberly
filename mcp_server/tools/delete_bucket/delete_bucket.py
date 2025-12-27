@@ -58,12 +58,7 @@ class DeleteBucketTool(Tool):
                 memories_deleted=0,
                 message="Cannot delete the 'default' bucket",
             )
-            return ToolResponse(
-                success=False,
-                output=output.model_dump(),
-                error="Cannot delete default bucket",
-                metadata=None,
-            )
+            return ToolResponse.from_model(output)
 
         # Find all keys in this bucket
         all_keys = self._storage.keys()
@@ -94,12 +89,7 @@ class DeleteBucketTool(Tool):
                 memories_deleted=0,
                 message=f"Bucket '{bucket_name}' contains {len(memory_keys)} memories. Use force=true to delete.",
             )
-            return ToolResponse(
-                success=False,
-                output=output.model_dump(),
-                error="Bucket not empty",
-                metadata=None,
-            )
+            return ToolResponse.from_model(output)
 
         # Delete all keys in the bucket
         deleted_count = 0

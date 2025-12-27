@@ -51,12 +51,7 @@ class CreateBucketTool(Tool):
                 bucket_name=bucket_name,
                 message="Bucket name cannot be empty",
             )
-            return ToolResponse(
-                success=False,
-                output=output.model_dump(),
-                error="Invalid bucket name",
-                metadata=None,
-            )
+            return ToolResponse.from_model(output)
 
         # Check if bucket already exists by looking for any keys with this bucket
         all_keys = self._storage.keys()
@@ -87,6 +82,4 @@ class CreateBucketTool(Tool):
                 message=f"Bucket '{bucket_name}' created successfully",
             )
 
-        return ToolResponse(
-            success=True, output=output.model_dump(), error=None, metadata=None
-        )
+        return ToolResponse.from_model(output)
