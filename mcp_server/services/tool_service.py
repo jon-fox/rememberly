@@ -6,6 +6,10 @@ from contextvars import ContextVar
 from fastmcp import FastMCP
 from interfaces.tool import Tool, ToolResponse, ToolContent
 from models import UserContext
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 # Context variable to store user context across async calls
 _user_context: ContextVar[UserContext] = ContextVar("user_context", default=None)
@@ -28,11 +32,21 @@ def require_auth(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
         user_context = get_user_context()
+        logger.info(f"Tool call: {func.__name__} | Args: {args} | Kwargs: {kwargs}")
+        logger.info(
+            f"require_auth check for {func.__name__}: is_authenticated={user_context.is_authenticated}, email={user_context.email}"
+        )
+
         if not user_context.is_authenticated:
+            logger.warning(f"Authentication failed for tool {func.__name__}")
             return ToolResponse.from_text(
                 "Error: Authentication required. Please ensure you have a valid access token."
             )
-        return await func(*args, **kwargs)
+
+        logger.info(f"Authentication passed for {func.__name__}, executing tool")
+        result = await func(*args, **kwargs)
+        logger.info(f"Tool {func.__name__} completed successfully")
+        return result
 
     return wrapper
 

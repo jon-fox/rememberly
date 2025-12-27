@@ -1,4 +1,5 @@
 """Integration tests for MCP API endpoint using OAuth."""
+
 import os
 import socket
 import asyncio
@@ -29,19 +30,16 @@ async def test_oauth_and_tools_list():
     print("\nConnecting with OAuth...")
     try:
         async with Client(
-            MCP_ENDPOINT,
-            auth="oauth",
-            init_timeout=300,
-            timeout=60
+            MCP_ENDPOINT, auth="oauth", init_timeout=300, timeout=60
         ) as client:
             print("[OK] OAuth authentication successful")
-            
+
             # List available tools
             tools = await client.list_tools()
             print(f"[OK] Retrieved {len(tools)} tools:")
             for tool in tools:
                 print(f"     - {tool.name}")
-            
+
             return True
     except Exception as e:
         print(f"[FAIL] OAuth or tools/list failed: {e}")
@@ -50,9 +48,9 @@ async def test_oauth_and_tools_list():
 
 if __name__ == "__main__":
     print("Testing MCP API endpoint...\n")
-    
+
     # Basic connectivity tests
     test_dns_resolution()
-    
+
     # OAuth and tools/list test
     asyncio.run(test_oauth_and_tools_list())

@@ -111,16 +111,16 @@ def create_http_app():
     """Create a FastMCP HTTP app with CORS and Auth middleware."""
     from starlette.applications import Starlette
     from starlette.routing import Mount
-    
+
     mcp_server = create_mcp_server()
     auth = get_supabase_auth()
-    
+
     # Get well-known OAuth discovery routes
     well_known_routes = auth.get_well_known_routes(mcp_path="/mcp")
-    
+
     # Create MCP app
     mcp_app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
-    
+
     # Mount everything in a Starlette app with well-known routes at root
     app = Starlette(
         routes=[
@@ -129,7 +129,7 @@ def create_http_app():
         ],
         lifespan=mcp_app.lifespan,
     )
-    
+
     app.add_middleware(AuthMiddleware)
     app.add_middleware(
         CORSMiddleware,
