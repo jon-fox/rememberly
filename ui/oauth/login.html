@@ -138,9 +138,14 @@
                 
                 const { data: { user }, error } = await supabaseClient.auth.getUser();
                 
-                if (user && redirectUrl) {
+                if (user) {
                     // Already logged in, redirect to destination
-                    window.location.href = redirectUrl;
+                    if (redirectUrl) {
+                        window.location.href = redirectUrl;
+                    } else if (authorizationId) {
+                        // OAuth flow without redirect param - go to consent
+                        window.location.href = `/oauth/consent.html?authorization_id=${authorizationId}`;
+                    }
                 }
             } catch (error) {
                 console.error('Auth check error:', error);
