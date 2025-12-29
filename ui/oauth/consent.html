@@ -28,7 +28,7 @@
                     <p style="color: #666;"><strong id="client-name">An application</strong> wants to access your Rememberly account</p>
                 </div>
 
-                <div class="consent-info" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <div class="consent-info" style="margin: 20px 0; padding: 15px; background: transparent; border-radius: 8px;">
                     <h3 style="margin-top: 0; font-size: 14px; color: #666;">This application will be able to:</h3>
                     <ul style="list-style: none; padding: 0; margin: 10px 0; font-size: 14px;">
                         <li style="padding: 5px 0;">✓ Access your stored memories and context</li>
@@ -186,24 +186,21 @@
                 const client = getSupabaseClient();
                 const { data: { user }, error: userError } = await client.auth.getUser();
                 
+                console.log('Current user:', user);
+                console.log('User error:', userError);
+                
                 if (user) {
-                    // User is authenticated - get authorization details
-                    const { data: authDetails, error: authError } = await client.auth.oauth.getAuthorizationDetails(authorizationId);
+                    // User is authenticated - show consent screen directly
+                    console.log('User authenticated, showing consent screen');
                     
-                    if (authError || !authDetails) {
-                        showError(authError?.message || 'Failed to get authorization details');
-                        return;
-                    }
-                    
-                    console.log('Authorization details:', authDetails);
-                    
-                    // Update UI with client details
-                    document.getElementById('consent-client-name').textContent = authDetails.client?.name || 'An application';
+                    // Update UI with user details
+                    document.getElementById('consent-client-name').textContent = clientName;
                     document.getElementById('user-email').textContent = user.email;
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('consent-section').style.display = 'block';
                 } else {
                     // User is not authenticated - show auth section
+                    console.log('User not authenticated, showing login form');
                     // Store OAuth params in session storage for after authentication
                     sessionStorage.setItem('oauth_params', JSON.stringify(oauthParams));
                     document.getElementById('loading').style.display = 'none';
@@ -325,6 +322,47 @@
                 console.log('Approving with oauthParams:', oauthParams);
                 
                 const client = getSupabaseClient();
+                
+                // Get current user and session
+                const { data: { user }, error: userError } = await client.auth.getUser();
+                const { data: { session }, error: sessionError } = await client.auth.getSession();
+                
+                if (userError || !user) {
+                    showError('User authentication error');
+                    return;
+                }
+
+                // Create user in DynamoDB before approving authorization
+                if (session?.access_token) {
+                    console.log('Creating user in DynamoDB during OAuth consent approval...');
+                    try {
+                        const apiEndpoint = 'https://mcp.rememberly.xyz/users';
+                        const payload = {
+                            user_id: user.id,
+                            email: user.email,
+                            username: user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0]
+                        };
+                        
+                        const response = await fetch(apiEndpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${session.access_token}`
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        if (response.ok) {
+                            console.log('User created/updated in DynamoDB successfully');
+                        } else {
+                            console.warn('Failed to create user in DynamoDB:', response.status);
+                            // Continue anyway - don't block authorization
+                        }
+                    } catch (userCreateError) {
+                        console.error('Error creating user in DynamoDB:', userCreateError);
+                        // Continue anyway - don't block authorization
+                    }
+                }
                 
                 // Use Supabase JS library to approve authorization
                 const { data, error } = await client.auth.oauth.approveAuthorization(oauthParams.authorization_id);
