@@ -319,7 +319,8 @@
 
         window.approveAuthorization = async function() {
             try {
-                console.log('Approving with oauthParams:', oauthParams);
+                console.log('=== APPROVE BUTTON CLICKED ===');
+                console.log('oauthParams:', oauthParams);
                 
                 const client = getSupabaseClient();
                 
@@ -327,7 +328,11 @@
                 const { data: { user }, error: userError } = await client.auth.getUser();
                 const { data: { session }, error: sessionError } = await client.auth.getSession();
                 
+                console.log('User:', user);
+                console.log('Session:', session);
+                
                 if (userError || !user) {
+                    console.error('User authentication error:', userError);
                     showError('User authentication error');
                     return;
                 }
@@ -343,6 +348,8 @@
                             username: user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0]
                         };
                         
+                        console.log('Calling user creation API with payload:', payload);
+                        
                         const response = await fetch(apiEndpoint, {
                             method: 'POST',
                             headers: {
@@ -351,6 +358,8 @@
                             },
                             body: JSON.stringify(payload)
                         });
+                        
+                        console.log('User creation response status:', response.status);
                         
                         if (response.ok) {
                             console.log('User created/updated in DynamoDB successfully');
@@ -364,28 +373,39 @@
                     }
                 }
                 
+                console.log('About to call approveAuthorization with authorization_id:', oauthParams.authorization_id);
+                
                 // Use Supabase JS library to approve authorization
                 const { data, error } = await client.auth.oauth.approveAuthorization(oauthParams.authorization_id);
                 
+                console.log('approveAuthorization response - data:', data);
+                console.log('approveAuthorization response - error:', error);
+                
                 if (error) {
+                    console.error('Authorization approval error:', error);
                     throw error;
                 }
                 
-                console.log('Authorization approved:', data);
+                console.log('Authorization approved successfully!');
                 
                 // Clear session storage
                 sessionStorage.removeItem('oauth_params');
                 
                 // Redirect back to client with authorization code
                 const redirectUrl = data.redirect_url || data.redirect_to;
+                console.log('Redirect URL:', redirectUrl);
+                
                 if (redirectUrl) {
+                    console.log('Redirecting to:', redirectUrl);
                     window.location.href = redirectUrl;
                 } else {
+                    console.error('No redirect URL in response');
                     showError('No redirect URL provided');
                 }
 
             } catch (err) {
-                console.error('Error approving authorization:', err);
+                console.error('Error in approveAuthorization:', err);
+                console.error('Error stack:', err.stack);
                 showError(err.message || 'Failed to approve authorization');
             }
         };
