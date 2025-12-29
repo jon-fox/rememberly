@@ -149,16 +149,21 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initSupabase, supabaseClient } from './config.js';
+    <!-- Supabase JS SDK from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
 
+    <script>
         let authorizationId = null;
         let clientInfo = null;
 
         async function loadAuthorizationRequest() {
             try {
                 // Initialize Supabase
-                initSupabase();
+                if (!supabaseClient) {
+                    initSupabase();
+                }
 
                 // Get authorization_id from URL
                 const params = new URLSearchParams(window.location.search);
@@ -220,6 +225,47 @@
 
         window.approveAuthorization = async function() {
             try {
+                // Get current user and session
+                const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+                
+                if (userError || !user) {
+                    showError('User authentication error');
+                    return;
+                }
+
+                // Create user in DynamoDB before approving authorization
+                if (session?.access_token) {
+                    console.log('Creating user in DynamoDB during OAuth consent approval...');
+                    try {
+                        const apiEndpoint = 'https://mcp.rememberly.xyz/users';
+                        const payload = {
+                            user_id: user.id,
+                            email: user.email,
+                            username: user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0]
+                        };
+                        
+                        const response = await fetch(apiEndpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${session.access_token}`
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        if (response.ok) {
+                            console.log('User created/updated in DynamoDB successfully');
+                        } else {
+                            console.warn('Failed to create user in DynamoDB:', response.status);
+                            // Continue anyway - don't block authorization
+                        }
+                    } catch (userCreateError) {
+                        console.error('Error creating user in DynamoDB:', userCreateError);
+                        // Continue anyway - don't block authorization
+                    }
+                }
+
                 // Call Supabase to approve the authorization
                 const { data, error } = await supabaseClient.rpc('approve_oauth_authorization', {
                     authorization_id: authorizationId
