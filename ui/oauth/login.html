@@ -177,6 +177,9 @@
 
                     if (error) throw error;
 
+                    // Wait a moment for session to be fully persisted
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
                     // Redirect to the original destination or consent page
                     if (redirectUrl) {
                         window.location.href = redirectUrl;
