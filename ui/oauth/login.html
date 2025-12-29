@@ -90,10 +90,25 @@
     <script src="/auth.js"></script>
     <script>
         let redirectUrl = null;
+        let authorizationId = null;
 
         // Get redirect URL from query params
         function getRedirectUrl() {
             const params = new URLSearchParams(window.location.search);
+            
+            // Check for OAuth authorization flow
+            authorizationId = params.get('authorization_id');
+            if (authorizationId) {
+                // OAuth flow - redirect to consent with authorization_id
+                const consentParams = new URLSearchParams();
+                consentParams.set('authorization_id', authorizationId);
+                const clientName = params.get('client_name');
+                if (clientName) {
+                    consentParams.set('client_name', clientName);
+                }
+                return `/oauth/consent.html?${consentParams.toString()}`;
+            }
+            
             return params.get('redirect');
         }
 
