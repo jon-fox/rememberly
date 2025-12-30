@@ -177,8 +177,16 @@
 
                     if (error) throw error;
 
-                    // Wait a moment for session to be fully persisted
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Verify session is actually saved in storage before redirecting
+                    console.log('Login successful, verifying session storage...');
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    
+                    if (!session) {
+                        console.error('Session not found after login!');
+                        throw new Error('Session was not saved properly');
+                    }
+                    
+                    console.log('Session verified, redirecting...');
 
                     // Redirect to the original destination or consent page
                     if (redirectUrl) {
