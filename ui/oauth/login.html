@@ -89,15 +89,23 @@
     <script src="/config.js"></script>
     <script src="/auth.js"></script>
     <script>
+        console.log('===============================');
+        console.log('PAGE: /oauth/login.html LOADED');
+        console.log('===============================');
+        
         let redirectUrl = null;
         let authorizationId = null;
 
         // Get redirect URL from query params
         function getRedirectUrl() {
+            console.log('[LOGIN] getRedirectUrl() called');
             const params = new URLSearchParams(window.location.search);
+            console.log('[LOGIN] URL params:', Object.fromEntries(params));
             
             // Check for OAuth authorization flow
             authorizationId = params.get('authorization_id');
+            console.log('[LOGIN] authorization_id:', authorizationId);
+            
             if (authorizationId) {
                 // OAuth flow - redirect to consent with authorization_id
                 const consentParams = new URLSearchParams();
@@ -105,17 +113,24 @@
                 const clientName = params.get('client_name');
                 if (clientName) {
                     consentParams.set('client_name', clientName);
+                    console.log('[LOGIN] client_name:', clientName);
                 }
-                return `/oauth/consent.html?${consentParams.toString()}`;
+                const consentUrl = `/oauth/consent.html?${consentParams.toString()}`;
+                console.log('[LOGIN] OAuth flow detected, will redirect to:', consentUrl);
+                return consentUrl;
             }
             
-            return params.get('redirect');
+            const redirect = params.get('redirect');
+            console.log('[LOGIN] Regular redirect param:', redirect);
+            return redirect;
         }
 
         // Handle OAuth sign in
         async function handleOAuthSignIn(provider) {
+            console.log('[LOGIN] handleOAuthSignIn called for provider:', provider);
             try {
                 initSupabase();
+                console.log('[LOGIN] Supabase client initialized');
                 
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({
                     provider: provider,
@@ -125,70 +140,110 @@
                 });
 
                 if (error) throw error;
+                console.log('[LOGIN] OAuth signin initiated successfully');
             } catch (error) {
-                console.error('OAuth error:', error);
+                console.error('[LOGIN] OAuth error:', error);
                 document.getElementById('loginError').textContent = 'Failed to sign in with ' + provider;
             }
         }
 
         // Check if already logged in
         async function checkAuth() {
+            console.log('[LOGIN] checkAuth() called');
             try {
                 initSupabase();
+                console.log('[LOGIN] Checking for existing user session...');
                 
                 const { data: { user }, error } = await supabaseClient.auth.getUser();
+                console.log('[LOGIN] getUser() result - user:', user ? `${user.email} (${user.id})` : 'null');
+                console.log('[LOGIN] getUser() error:', error);
                 
                 if (user) {
+                    console.log('[LOGIN] User already authenticated!');
                     // Already logged in, redirect to destination
                     if (redirectUrl) {
+                        console.log('[LOGIN] Redirecting to redirectUrl:', redirectUrl);
                         window.location.href = redirectUrl;
                     } else if (authorizationId) {
                         // OAuth flow without redirect param - go to consent
-                        window.location.href = `/oauth/consent.html?authorization_id=${authorizationId}`;
-                    }
-                }
-            } catch (error) {
-                console.error('Auth check error:', error);
-            }
-        }
-
+                        const consentUrl = `/oauth/consent.html?authorization_id=${authorizationId}`;
+                        console.log('[LOGIN] Redirecting to consent with auth_id:', consentUrl);
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('[LOGIN] DOMContentLoaded event fired');
             redirectUrl = getRedirectUrl();
+            console.log('[LOGIN] Final redirectUrl:', redirectUrl);
+            console.log('[LOGIN] Final authorizationId:', authorizationId);
             
             const loginForm = document.getElementById('loginForm');
             const loginError = document.getElementById('loginError');
             
             // Email/password login
             loginForm.addEventListener('submit', async (e) => {
+                console.log('[LOGIN] ========== LOGIN FORM SUBMITTED ==========');
                 e.preventDefault();
                 loginError.textContent = '';
 
                 const email = document.getElementById('loginEmail').value;
                 const password = document.getElementById('loginPassword').value;
+                console.log('[LOGIN] Login attempt for email:', email);
 
                 try {
                     initSupabase();
+                    console.log('[LOGIN] Supabase client initialized');
+                    console.log('[LOGIN] Calling signInWithPassword...');
 
                     const { data, error } = await supabaseClient.auth.signInWithPassword({
                         email: email,
                         password: password
                     });
 
-                    if (error) throw error;
+                    if (error) {
+                        console.error('[LOGIN] signInWithPassword error:', error);
+                        throw error;
+                    }
+
+                    console.log('[LOGIN] ✓ signInWithPassword SUCCESS');
+                    console.log('[LOGIN] User data:', data.user ? `${data.user.email} (${data.user.id})` : 'null');
+                    console.log('[LOGIN] Session data:', data.session ? 'session exists' : 'NO SESSION');
 
                     // Verify session is actually saved in storage before redirecting
-                    console.log('Login successful, verifying session storage...');
+                    console.log('[LOGIN] Verifying session was saved to localStorage...');
                     const { data: { session } } = await supabaseClient.auth.getSession();
                     
                     if (!session) {
-                        console.error('Session not found after login!');
+                        console.error('[LOGIN] ✗ SESSION NOT FOUND AFTER LOGIN!');
+                        console.error('[LOGIN] localStorage keys:', Object.keys(localStorage));
+                        console.error('[LOGIN] Auth token in storage:', localStorage.getItem('rememberly-auth-token') ? 'EXISTS' : 'MISSING');
                         throw new Error('Session was not saved properly');
                     }
                     
-                    console.log('Session verified, redirecting...');
+                    console.log('[LOGIN] ✓ Session verified in storage');
+                    console.log('[LOGIN] Session user:', session.user ? session.user.email : 'null');
+                    console.log('[LOGIN] Access token exists:', !!session.access_token);
 
                     // Redirect to the original destination or consent page
+                    if (redirectUrl) {
+                        console.log('[LOGIN] Redirecting to:', redirectUrl);
+                        window.location.href = redirectUrl;
+                    } else {
+                        console.log('[LOGIN] No redirect URL, going to homepage');
+                        window.location.href = '/';
+            // OAuth buttons
+            document.getElementById('googleSignIn').addEventListener('click', () => {
+                console.log('[LOGIN] Google sign-in button clicked');
+                handleOAuthSignIn('google');
+            });
+            document.getElementById('githubSignIn').addEventListener('click', () => {
+                console.log('[LOGIN] GitHub sign-in button clicked');
+                handleOAuthSignIn('github');
+            });
+
+            // Check if already authenticated
+            console.log('[LOGIN] Calling checkAuth() on page load...');
+            checkAuth();
+        });
+    </script>       // Redirect to the original destination or consent page
                     if (redirectUrl) {
                         window.location.href = redirectUrl;
                     } else {

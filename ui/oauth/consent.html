@@ -139,15 +139,22 @@
     <script src="/config.js"></script>
     <script src="/auth.js"></script>
     <script>
+        console.log('================================');
+        console.log('PAGE: /oauth/consent.html LOADED');
+        console.log('================================');
+        
         let oauthParams = {};
 
         // Initialize Supabase client using auth.js
         function initializeSupabase() {
+            console.log('[CONSENT] initializeSupabase() called');
             const client = initSupabase();
             if (!client) {
+                console.error('[CONSENT] Failed to initialize Supabase client');
                 showError('Supabase configuration missing. Please configure your anon key.');
                 return false;
             }
+            console.log('[CONSENT] Supabase client initialized successfully');
             return true;
         }
 
@@ -157,37 +164,71 @@
         }
 
         async function loadAuthorizationRequest() {
+            console.log('[CONSENT] ========== loadAuthorizationRequest() CALLED ==========');
             try {
                 // Initialize Supabase
                 if (!initializeSupabase()) {
+                    console.error('[CONSENT] Failed to initialize Supabase, aborting');
                     return;
                 }
 
                 // Parse OAuth parameters from URL
                 const params = new URLSearchParams(window.location.search);
                 
-                console.log('URL parameters:', Object.fromEntries(params));
+                console.log('[CONSENT] URL parameters:', Object.fromEntries(params));
                 
                 // Supabase sends authorization_id
                 const authorizationId = params.get('authorization_id');
+                console.log('[CONSENT] authorization_id:', authorizationId);
                 
                 oauthParams = {
                     authorization_id: authorizationId
                 };
 
-                console.log('Parsed oauthParams:', oauthParams);
+                console.log('[CONSENT] Parsed oauthParams:', oauthParams);
 
                 // Display client name if available
                 const clientName = params.get('client_name') || 'An application';
+                console.log('[CONSENT] Client name:', clientName);
                 document.getElementById('client-name').textContent = clientName;
                 document.getElementById('consent-client-name').textContent = clientName;
 
                 // Check if user is already authenticated
+                console.log('[CONSENT] Checking user authentication status...');
                 const client = getSupabaseClient();
-                const { data: { user }, error: userError } = await client.auth.getUser();
                 
-                console.log('Current user:', user);
-                console.log('User error:', userError);
+                if (user) {
+                    // User is authenticated - show consent screen directly
+                    console.log('[CONSENT] ✓ USER IS AUTHENTICATED - showing consent screen');
+                    
+                    // Update UI with user details
+                    document.getElementById('consent-client-name').textContent = clientName;
+                    document.getElementById('user-email').textContent = user.email;
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('consent-section').style.display = 'block';
+                    console.log('[CONSENT] Consent UI updated and displayed');
+                } else {
+                    // User is not authenticated - show auth section
+                    console.log('[CONSENT] ✗ USER NOT AUTHENTICATED - showing login form');
+                    console.log('[CONSENT] This means the session was lost between login.html and consent.html');
+                    
+                    // Store OAuth params in session storage for after authentication
+                    sessionStorage.setItem('oauth_params', JSON.stringify(oauthParams));
+                    console.log('[CONSENT] Stored oauth_params in sessionStorage');
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('auth-section').style.display = 'block';
+                    console.log('[CONSENT] Login form UI displayed');
+                }
+
+            } catch (err) {
+                console.error('[CONSENT] ✗ ERROR in loadAuthorizationRequest:', err);
+                console.error('[CONSENT] Error stack:', err.stack);
+                showError('Failed to load authorization request');
+            }
+        }       console.log('[CONSENT] getUser() result:');
+                console.log('[CONSENT]   - user:', user ? `${user.email} (${user.id})` : 'null');
+                console.log('[CONSENT]   - error:', userError);
                 
                 if (user) {
                     // User is authenticated - show consent screen directly
