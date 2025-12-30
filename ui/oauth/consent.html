@@ -196,6 +196,32 @@
                 // Check if user is already authenticated
                 console.log('[CONSENT] Checking user authentication status...');
                 const client = getSupabaseClient();
+                console.log('[CONSENT] Got Supabase client:', !!client);
+                
+                // Check localStorage first
+                console.log('[CONSENT] Checking localStorage...');
+                console.log('[CONSENT] localStorage keys:', Object.keys(localStorage));
+                const authToken = localStorage.getItem('rememberly-auth-token');
+                console.log('[CONSENT] Auth token in localStorage:', authToken ? 'EXISTS (length: ' + authToken.length + ')' : 'MISSING');
+                
+                // Try to get session
+                console.log('[CONSENT] Calling getSession()...');
+                const { data: sessionData, error: sessionError } = await client.auth.getSession();
+                console.log('[CONSENT] getSession() result:');
+                console.log('[CONSENT]   - session exists:', !!sessionData.session);
+                console.log('[CONSENT]   - session error:', sessionError);
+                if (sessionData.session) {
+                    console.log('[CONSENT]   - session user:', sessionData.session.user?.email);
+                    console.log('[CONSENT]   - access_token exists:', !!sessionData.session.access_token);
+                }
+                
+                // Try to get user
+                console.log('[CONSENT] Calling getUser()...');
+                const { data: { user }, error: userError } = await client.auth.getUser();
+                
+                console.log('[CONSENT] getUser() result:');
+                console.log('[CONSENT]   - user:', user ? `${user.email} (${user.id})` : 'null');
+                console.log('[CONSENT]   - error:', userError);
                 
                 if (user) {
                     // User is authenticated - show consent screen directly
@@ -224,32 +250,6 @@
             } catch (err) {
                 console.error('[CONSENT] ✗ ERROR in loadAuthorizationRequest:', err);
                 console.error('[CONSENT] Error stack:', err.stack);
-                showError('Failed to load authorization request');
-            }
-        }       console.log('[CONSENT] getUser() result:');
-                console.log('[CONSENT]   - user:', user ? `${user.email} (${user.id})` : 'null');
-                console.log('[CONSENT]   - error:', userError);
-                
-                if (user) {
-                    // User is authenticated - show consent screen directly
-                    console.log('User authenticated, showing consent screen');
-                    
-                    // Update UI with user details
-                    document.getElementById('consent-client-name').textContent = clientName;
-                    document.getElementById('user-email').textContent = user.email;
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('consent-section').style.display = 'block';
-                } else {
-                    // User is not authenticated - show auth section
-                    console.log('User not authenticated, showing login form');
-                    // Store OAuth params in session storage for after authentication
-                    sessionStorage.setItem('oauth_params', JSON.stringify(oauthParams));
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('auth-section').style.display = 'block';
-                }
-
-            } catch (err) {
-                console.error('Error loading authorization:', err);
                 showError('Failed to load authorization request');
             }
         }
