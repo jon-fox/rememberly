@@ -249,6 +249,115 @@ async function ensureUserInDatabase(user, accessToken, username = null) {
     }
 }
 
+// Auto-approve OAuth authorization for first-party apps
+async function autoApproveAuthorization(session, authorizationId) {
+    try {
+        console.log('[AUTH] Auto-approve started');
+        console.log('[AUTH] Session user:', session.user.email);
+        console.log('[AUTH] authorization_id:', authorizationId);
+        
+        const user = session.user;
+        
+        // Create user in DynamoDB
+        if (session?.access_token) {
+            console.log('[AUTH] Creating user in DynamoDB...');
+            await ensureUserInDatabase(user, session.access_token);
+            console.log('[AUTH] User creation completed');
+        }
+        
+        console.log('[AUTH] Calling approveAuthorization with ID:', authorizationId);
+        const { data, error } = await supabaseClient.auth.oauth.approveAuthorization(authorizationId);
+        
+        console.log('[AUTH] approveAuthorization response - data:', data);
+        console.log('[AUTH] approveAuthorization response - error:', error);
+        
+        if (error) {
+            console.error('[AUTH] Approval error:', error);
+            throw error;
+        }
+        
+        console.log('[AUTH] Authorization auto-approved successfully');
+        sessionStorage.removeItem('oauth_params');
+        
+        const redirectUrl = data.redirect_url || data.redirect_to;
+        console.log('[AUTH] Redirect URL from response:', redirectUrl);
+        
+        if (redirectUrl) {
+            console.log('[AUTH] Redirecting to:', redirectUrl);
+            window.location.href = redirectUrl;
+            return true;
+        } else {
+            console.error('[AUTH] No redirect URL in response');
+            return false;
+        }
+    } catch (err) {
+        console.error('[AUTH] Auto-approve failed:', err);
+        console.error('[AUTH] Error message:', err.message);
+        throw err;
+    }
+}
+
+// Approve OAuth authorization (manual)
+async function approveAuthorization(authorizationId, session) {
+    try {
+        console.log('[AUTH] Manual approve started');
+        
+        const user = session?.user || await getCurrentUser();
+        
+        if (!user) {
+            throw new Error('User authentication error');
+        }
+
+        // Create user in DynamoDB
+        if (session?.access_token) {
+            console.log('[AUTH] Creating user in DynamoDB...');
+            await ensureUserInDatabase(user, session.access_token);
+        }
+        
+        console.log('[AUTH] Approving authorization...');
+        
+        const { data, error } = await supabaseClient.auth.oauth.approveAuthorization(authorizationId);
+        
+        if (error) throw error;
+        
+        console.log('[AUTH] Authorization approved successfully');
+        sessionStorage.removeItem('oauth_params');
+        
+        const redirectUrl = data.redirect_url || data.redirect_to;
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
+            return true;
+        } else {
+            throw new Error('No redirect URL provided');
+        }
+    } catch (err) {
+        console.error('[AUTH] Error approving authorization:', err);
+        throw err;
+    }
+}
+
+// Deny OAuth authorization
+async function denyAuthorization(authorizationId) {
+    try {
+        const { data, error } = await supabaseClient.auth.oauth.denyAuthorization(authorizationId);
+        
+        if (error) throw error;
+        
+        console.log('[AUTH] Authorization denied');
+        sessionStorage.removeItem('oauth_params');
+        
+        if (data.redirect_url) {
+            window.location.href = data.redirect_url;
+            return true;
+        } else {
+            throw new Error('No redirect URL provided');
+        }
+    } catch (err) {
+        console.error('[AUTH] Error denying authorization:', err);
+        throw err;
+    }
+}
+
 // Initialize immediately (don't wait for DOMContentLoaded)
 if (typeof supabase !== 'undefined') {
     initSupabase();
