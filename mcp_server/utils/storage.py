@@ -1,6 +1,6 @@
 """Shared storage for memory tools."""
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 
 class MemoryStorage:
@@ -8,9 +8,6 @@ class MemoryStorage:
 
     In production, this would be replaced with a database or cache service.
     This class ensures that GetMemoryTool, PutMemoryTool, and ListMemoriesTool share the same storage.
-    
-    Storage keys are formatted as: {user_email}/{bucket}/{memory_key}
-    This format matches S3 path conventions and ensures proper isolation between users.
     """
 
     def __init__(self):
@@ -43,18 +40,6 @@ class MemoryStorage:
     def keys(self) -> list[str]:
         """Get all storage keys."""
         return list(self._storage.keys())
-    
-    def keys_for_user(self, user_email: str) -> List[str]:
-        """Get all storage keys for a specific user.
-        
-        Args:
-            user_email: The user's email address
-            
-        Returns:
-            List of keys belonging to the user
-        """
-        prefix = f"{user_email}/"
-        return [key for key in self._storage.keys() if key.startswith(prefix)]
 
 
 # Global storage instance shared by all memory tools

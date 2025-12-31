@@ -12,7 +12,6 @@ resource "aws_lambda_function" "user_service" {
   environment {
     variables = {
       DYNAMODB_TABLE = aws_dynamodb_table.metadata.name
-      STORAGE_BUCKET = aws_s3_bucket.storage.id
     }
   }
 
@@ -52,9 +51,9 @@ resource "aws_iam_role" "user_service" {
   }
 }
 
-# IAM policy for user service - DynamoDB and S3 access
-resource "aws_iam_role_policy" "user_service_storage" {
-  name = "user-service-storage-access"
+# IAM policy for user service - DynamoDB access
+resource "aws_iam_role_policy" "user_service_dynamodb" {
+  name = "user-service-dynamodb-access"
   role = aws_iam_role.user_service.id
 
   policy = jsonencode({
@@ -71,16 +70,6 @@ resource "aws_iam_role_policy" "user_service_storage" {
         Resource = [
           aws_dynamodb_table.metadata.arn,
           "${aws_dynamodb_table.metadata.arn}/index/*"
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:PutObject",
-          "s3:GetObject"
-        ]
-        Resource = [
-          "${aws_s3_bucket.storage.arn}/*"
         ]
       }
     ]

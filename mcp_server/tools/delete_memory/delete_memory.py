@@ -4,7 +4,6 @@ from typing import Dict, Any
 from interfaces.tool import Tool, ToolResponse
 from .models import DeleteMemoryInput, DeleteMemoryOutput
 from utils import get_shared_storage
-from services.tool_service import get_user_context
 
 
 class DeleteMemoryTool(Tool):
@@ -32,12 +31,9 @@ class DeleteMemoryTool(Tool):
             "output": self.output_model.model_json_schema(),
         }
 
-    def _get_storage_key(self, key: str, bucket: str, user_email: str) -> str:
-        """Generate a storage key with user and bucket.
-        
-        Format: {user_email}/{bucket}/{key}
-        """
-        return f"{user_email}/{bucket}/{key}"
+    def _get_storage_key(self, key: str, bucket: str) -> str:
+        """Generate a storage key with bucket."""
+        return f"{bucket}:{key}"
 
     async def execute(self, input_data: DeleteMemoryInput) -> ToolResponse:
         """Execute the delete memory tool.
@@ -48,14 +44,7 @@ class DeleteMemoryTool(Tool):
         Returns:
             A response confirming whether the memory was deleted
         """
-        # Get user context for isolation
-        user_context = get_user_context()
-        if not user_context.email:
-            return ToolResponse.from_text(
-                "Error: User email not found. Authentication required."
-            )
-        
-        storage_key = self._get_storage_key(input_data.key, input_data.bucket, user_context.email)
+        storage_key = self._get_storage_key(input_data.key, input_data.bucket)
 
         deleted = self._storage.delete(storage_key)
 

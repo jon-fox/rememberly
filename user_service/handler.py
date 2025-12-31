@@ -12,7 +12,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 dynamodb = boto3.resource("dynamodb")
-s3_client = boto3.client("s3")
 
 
 def get_table():
@@ -24,7 +23,7 @@ def get_table():
 
 
 def create_user(user_id: str, email: str, username: str = None) -> Dict[str, Any]:
-    """Create a new user in DynamoDB and initialize their default bucket in S3."""
+    """Create a new user in DynamoDB."""
     table = get_table()
     timestamp = datetime.utcnow().isoformat()
 
@@ -42,26 +41,6 @@ def create_user(user_id: str, email: str, username: str = None) -> Dict[str, Any
 
     table.put_item(Item=user_data)
     logger.info(f"Created user in DynamoDB: {user_id}")
-    
-    # Create default bucket in S3
-    # Storage key format: {user_email}/{bucket}/{key}
-    storage_bucket = os.getenv("STORAGE_BUCKET")
-    if storage_bucket:
-        try:
-            # Create the default bucket path/folder in S3
-            s3_key = f"{email}/default/"
-            
-            s3_client.put_object(
-                Bucket=storage_bucket,
-                Key=s3_key,
-                Body=b''
-            )
-            logger.info(f"Created default bucket path in S3 for user: {email}")
-        except ClientError as e:
-            logger.error(f"Failed to create default bucket in S3 for {email}: {str(e)}")
-            # Don't fail user creation if bucket creation fails
-    else:
-        logger.warning("STORAGE_BUCKET environment variable not set, skipping S3 bucket creation")
 
     return user_data
 

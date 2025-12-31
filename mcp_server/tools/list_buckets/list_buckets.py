@@ -4,7 +4,6 @@ from typing import Dict, Any
 from interfaces.tool import Tool, ToolResponse
 from .models import ListBucketsInput, ListBucketsOutput, BucketInfo
 from utils import get_shared_storage
-from services.tool_service import get_user_context
 
 
 class ListBucketsTool(Tool):
@@ -33,17 +32,15 @@ class ListBucketsTool(Tool):
             "output": self.output_model.model_json_schema(),
         }
 
-    def _parse_storage_key(self, storage_key: str) -> tuple[str, str, str]:
-        """Parse a storage key into user_email, bucket and key.
+    def _parse_storage_key(self, storage_key: str) -> tuple[str, str]:
+        """Parse a storage key into bucket and key.
 
-        Format: {user_email}/{bucket}/{key}
+        Format: bucket:key
         """
-        parts = storage_key.split("/", 2)
-        if len(parts) == 3:
-            return parts[0], parts[1], parts[2]
-        elif len(parts) == 2:
-            return "unknown", parts[0], parts[1]
-        return "unknown", "default", storage_key
+        parts = storage_key.split(":", 1)
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        return "default", storage_key
 
     async def execute(self, input_data: ListBucketsInput) -> ToolResponse:
         """Execute the list buckets tool.
@@ -54,22 +51,15 @@ class ListBucketsTool(Tool):
         Returns:
             A response containing the list of buckets
         """
-        # Get user context for isolation
-        user_context = get_user_context()
-        if not user_context.email:
-            return ToolResponse.from_text(
-                "Error: User email not found. Authentication required."
-            )
-        
-        # Get all storage keys for this user
-        all_keys = self._storage.keys_for_user(user_context.email)
+        # Get all storage keys
+        all_keys = self._storage.keys()
 
         # Count memories per bucket
         bucket_counts: Dict[str, int] = {}
         for storage_key in all_keys:
-            user_email, bucket, key = self._parse_storage_key(storage_key)
+            bucket, key = self._parse_storage_key(storage_key)
             # Skip bucket metadata entries when counting
-            if key.startswith("__bucket_meta__"):
+            if key.startswith("__bucket_meta__:"):
                 continue
             bucket_counts[bucket] = bucket_counts.get(bucket, 0) + 1
 

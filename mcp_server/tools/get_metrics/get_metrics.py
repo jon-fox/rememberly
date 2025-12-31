@@ -6,7 +6,6 @@ from datetime import datetime
 from interfaces.tool import Tool, ToolResponse
 from .models import GetMetricsInput, GetMetricsOutput, BucketMetrics, MemoryDetail
 from utils import get_shared_storage
-from services.tool_service import get_user_context
 
 
 class GetMetricsTool(Tool):
@@ -35,17 +34,12 @@ class GetMetricsTool(Tool):
             "output": self.output_model.model_json_schema(),
         }
 
-    def _parse_storage_key(self, storage_key: str) -> tuple[str, str, str]:
-        """Parse a storage key into user_email, bucket and key.
-        
-        Format: {user_email}/{bucket}/{key}
-        """
-        parts = storage_key.split("/", 2)
-        if len(parts) == 3:
-            return parts[0], parts[1], parts[2]
-        elif len(parts) == 2:
-            return "unknown", parts[0], parts[1]
-        return "unknown", "default", storage_key
+    def _parse_storage_key(self, storage_key: str) -> tuple[str, str]:
+        """Parse a storage key into bucket and key."""
+        parts = storage_key.split(":", 1)
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        return "default", storage_key
 
     def _get_value_size(self, value: Any) -> int:
         """Get the approximate size of a value in bytes."""
@@ -68,21 +62,14 @@ class GetMetricsTool(Tool):
         Returns:
             A response containing storage metrics
         """
-        # Get user context for isolation
-        user_context = get_user_context()
-        if not user_context.email:
-            return ToolResponse.from_text(
-                "Error: User email not found. Authentication required."
-            )
-        
-        # Get all storage keys for this user
-        all_keys = self._storage.keys_for_user(user_context.email)
+        # Get all storage keys
+        all_keys = self._storage.keys()
 
         # Organize data by bucket
         bucket_data: Dict[str, List[tuple[str, Any]]] = {}
 
         for storage_key in all_keys:
-            user_email, bucket, key = self._parse_storage_key(storage_key)
+            bucket, key = self._parse_storage_key(storage_key)
 
             # Skip bucket metadata entries
             if key.startswith("__bucket_meta__"):
