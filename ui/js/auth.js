@@ -250,12 +250,12 @@ async function ensureUserInDatabase(user, accessToken, username = null) {
 }
 
 // Auto-approve OAuth authorization for first-party apps
-async function autoApproveAuthorization(session, authorizationId) {
+async function autoApproveAuthorization(session, authorizationId, redirectUri) {
     try {
         console.log('[AUTH] Auto-approve started');
         console.log('[AUTH] Session user:', session.user.email);
         console.log('[AUTH] authorization_id:', authorizationId);
-        console.log('[AUTH] Supabase URL:', supabaseClient.supabaseUrl);
+        console.log('[AUTH] redirect_uri:', redirectUri);
         
         const user = session.user;
         
@@ -266,39 +266,19 @@ async function autoApproveAuthorization(session, authorizationId) {
             console.log('[AUTH] User creation completed');
         }
         
-        console.log('[AUTH] Calling approveAuthorization with ID:', authorizationId);
-        console.log('[AUTH] Full approval URL will be: /auth/v1/oauth/authorizations/' + authorizationId + '/consent');
-        
-        const { data, error } = await supabaseClient.auth.oauth.approveAuthorization(authorizationId);
-        
-        console.log('[AUTH] approveAuthorization response - data:', data);
-        console.log('[AUTH] approveAuthorization response - error:', error);
-        
-        if (error) {
-            console.error('[AUTH] Approval error:', error);
-            console.error('[AUTH] Error status:', error.status);
-            console.error('[AUTH] Error code:', error.code);
-            throw error;
+        // Build redirect URL with authorization code (using the JWT as the code)
+        const redirectUrl = new URL(redirectUri);
+        redirectUrl.searchParams.set('code', session.access_token);
+        if (oauthParams.state) {
+            redirectUrl.searchParams.set('state', oauthParams.state);
         }
         
-        console.log('[AUTH] Authorization auto-approved successfully');
-        sessionStorage.removeItem('oauth_params');
+        console.log('[AUTH] Redirecting to:', redirectUrl.toString());
+        window.location.href = redirectUrl.toString();
+        return true;
         
-        const redirectUrl = data.redirect_url || data.redirect_to;
-        console.log('[AUTH] Redirect URL from response:', redirectUrl);
-        
-        if (redirectUrl) {
-            console.log('[AUTH] Redirecting to:', redirectUrl);
-            window.location.href = redirectUrl;
-            return true;
-        } else {
-            console.error('[AUTH] No redirect URL in response');
-            return false;
-        }
     } catch (err) {
         console.error('[AUTH] Auto-approve failed:', err);
-        console.error('[AUTH] Error message:', err.message);
-        console.error('[AUTH] Error name:', err.name);
         throw err;
     }
 }
