@@ -93,7 +93,8 @@ async function loadAuthorizationRequest() {
                     // Check if this is an authorization not found error
                     if (err && (err.code === 'oauth_authorization_not_found' || 
                                 (err.message && err.message.toLowerCase().includes('not found')))) {
-                        showError('This authorization request has expired or already been used. Please try connecting again.');
+                        console.error('[CONSENT] Authorization not found - likely expired or already used');
+                        showError('This authorization request has expired or already been used. Please close this window and try connecting again from your MCP client (e.g., Claude Desktop).');
                         return;
                     }
                     
