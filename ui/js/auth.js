@@ -266,20 +266,11 @@ async function autoApproveAuthorization(session, authorizationId, oauthParams) {
             console.log('[AUTH] User creation completed');
         }
         
-        // Build the continue URL with all original OAuth parameters
+        // Build the continue URL to complete the OAuth authorization
+        // The authorization_id already contains the original redirect_uri stored by Supabase
+        // We just need to provide the authorization_id and Supabase will redirect to Claude
         const continueUrl = new URL(`${supabaseClient.supabaseUrl}/auth/v1/oauth/authorize`);
         continueUrl.searchParams.set('authorization_id', authorizationId);
-        
-        // Pass through all original OAuth parameters from Claude
-        if (oauthParams.redirect_uri) {
-            continueUrl.searchParams.set('redirect_uri', oauthParams.redirect_uri);
-        }
-        if (oauthParams.state) {
-            continueUrl.searchParams.set('state', oauthParams.state);
-        }
-        if (oauthParams.scope) {
-            continueUrl.searchParams.set('scope', oauthParams.scope);
-        }
         
         console.log('[AUTH] Redirecting to Supabase to complete OAuth:', continueUrl.toString());
         
