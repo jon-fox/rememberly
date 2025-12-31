@@ -24,23 +24,10 @@ async function loadAuthorizationRequest() {
         
         // Parse OAuth parameters from URL first
         const params = new URLSearchParams(window.location.search);
-        
-        // Log everything to understand the flow
-        console.log('[CONSENT] Full URL:', window.location.href);
-        console.log('[CONSENT] All params:', Object.fromEntries(params.entries()));
-        
         const authorizationId = params.get('authorization_id');
         const clientName = params.get('client_name') || 'An application';
-        const redirectUri = params.get('redirect_uri');
-        const state = params.get('state');
-        const scope = params.get('scope');
         
-        oauthParams = { 
-            authorization_id: authorizationId,
-            redirect_uri: redirectUri,
-            state: state,
-            scope: scope
-        };
+        oauthParams = { authorization_id: authorizationId };
         
         console.log('[CONSENT] OAuth params:', oauthParams);
         console.log('[CONSENT] Client name:', clientName);
