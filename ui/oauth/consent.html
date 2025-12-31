@@ -142,6 +142,12 @@
         console.log('================================');
         console.log('PAGE: /oauth/consent.html LOADED');
         console.log('================================');
+        console.log('[CONSENT] Full URL:', window.location.href);
+        console.log('[CONSENT] Origin:', window.location.origin);
+        console.log('[CONSENT] Protocol:', window.location.protocol);
+        console.log('[CONSENT] Host:', window.location.host);
+        console.log('[CONSENT] Pathname:', window.location.pathname);
+        console.log('[CONSENT] Document referrer (where we came from):', document.referrer);
         
         let oauthParams = {};
 
@@ -176,6 +182,7 @@
                 const params = new URLSearchParams(window.location.search);
                 
                 console.log('[CONSENT] URL parameters:', Object.fromEntries(params));
+                console.log('[CONSENT] URL hash:', window.location.hash);
                 
                 // Supabase sends authorization_id
                 const authorizationId = params.get('authorization_id');
@@ -193,9 +200,17 @@
                 document.getElementById('client-name').textContent = clientName;
                 document.getElementById('consent-client-name').textContent = clientName;
 
+                const client = getSupabaseClient();
+                
+                // IMPORTANT: Wait for Supabase to process OAuth callback from URL hash
+                // This is critical when redirecting back from OAuth providers (Google/GitHub)
+                console.log('[CONSENT] Waiting for Supabase to process session from URL...');
+                
+                // Give Supabase a moment to process the hash fragment
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
                 // Check if user is already authenticated
                 console.log('[CONSENT] Checking user authentication status...');
-                const client = getSupabaseClient();
                 console.log('[CONSENT] Got Supabase client:', !!client);
                 
                 // Check localStorage first
@@ -236,7 +251,7 @@
                 } else {
                     // User is not authenticated - show auth section
                     console.log('[CONSENT] ✗ USER NOT AUTHENTICATED - showing login form');
-                    console.log('[CONSENT] This means the session was lost between login.html and consent.html');
+                    console.log('[CONSENT] This means the session was lost or not yet established');
                     
                     // Store OAuth params in session storage for after authentication
                     sessionStorage.setItem('oauth_params', JSON.stringify(oauthParams));
