@@ -14,23 +14,7 @@ async function loadAuthorizationRequest() {
             initSupabase();
         }
         
-        // Listen for auth state changes
-        console.log('[CONSENT] Setting up auth state listener...');
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            console.log('[CONSENT] Auth state change:', event);
-            if (session) {
-                console.log('[CONSENT] Session user:', session.user.email);
-                console.log('[CONSENT] Reloading page after auth state change...');
-                window.location.reload();
-            }
-        });
-        
-        // Wait for session initialization (especially after OAuth redirect)
-        console.log('[CONSENT] Waiting 3 seconds for session to initialize...');
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        console.log('[CONSENT] Done waiting, checking session now...');
-
-        // Parse OAuth parameters from URL
+        // Parse OAuth parameters from URL first
         const params = new URLSearchParams(window.location.search);
         const authorizationId = params.get('authorization_id');
         const clientName = params.get('client_name') || 'An application';
@@ -40,8 +24,19 @@ async function loadAuthorizationRequest() {
         console.log('[CONSENT] OAuth params:', oauthParams);
         console.log('[CONSENT] Client name:', clientName);
         
+        if (!authorizationId) {
+            console.error('[CONSENT] No authorization_id in URL');
+            showError('Invalid authorization request');
+            return;
+        }
+        
         document.getElementById('client-name').textContent = clientName;
         document.getElementById('consent-client-name').textContent = clientName;
+
+        // Wait for session initialization (especially after OAuth redirect)
+        console.log('[CONSENT] Waiting for session to initialize...');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log('[CONSENT] Done waiting, checking session now...');
 
         // Check authentication status
         const session = await getCurrentSession();
@@ -126,14 +121,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // OAuth buttons - redirect back to consent page after OAuth
-    const consentUrl = window.location.href.split('?')[0];
+    const consentUrl = window.location.href.split('?')[0] + window.location.search;
     const params = new URLSearchParams(window.location.search);
     
     const googleBtn = document.getElementById('googleSignIn');
     if (googleBtn) {
         googleBtn.addEventListener('click', async () => {
             try {
-                sessionStorage.setItem('oauth_params', JSON.stringify(Object.fromEntries(params)));
+                // Store the authorization params so we can restore them after OAuth
+                sessionStorage.setItem('oauth_authorization_id', params.get('authorization_id'));
+                sessionStorage.setItem('oauth_client_name', params.get('client_name') || 'An application');
                 await signInWithOAuth('google', consentUrl);
             } catch (error) {
                 console.error('Google OAuth error:', error);
@@ -146,20 +143,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (githubBtn) {
         githubBtn.addEventListener('click', async () => {
             try {
-                sessionStorage.setItem('oauth_params', JSON.stringify(Object.fromEntries(params)));
+                // Store the authorization params so we can restore them after OAuth
+                sessionStorage.setItem('oauth_authorization_id', params.get('authorization_id'));
+                sessionStorage.setItem('oauth_client_name', params.get('client_name') || 'An application');
                 await signInWithOAuth('github', consentUrl);
             } catch (error) {
                 console.error('GitHub OAuth error:', error);
                 showError('Failed to sign in with GitHub');
             }
         });
-    }
-
-    // Restore OAuth params from session storage
-    const storedParams = sessionStorage.getItem('oauth_params');
-    if (storedParams && !window.location.search) {
-        const restoredParams = new URLSearchParams(JSON.parse(storedParams));
-        window.location.search = restoredParams.toString();
     }
 
     loadAuthorizationRequest();
