@@ -255,7 +255,6 @@ async function autoApproveAuthorization(session, authorizationId) {
         console.log('[AUTH] Auto-approve started');
         console.log('[AUTH] Session user:', session.user.email);
         console.log('[AUTH] authorization_id:', authorizationId);
-        console.log('[AUTH] Supabase URL:', supabaseClient.supabaseUrl);
         
         const user = session.user;
         
@@ -266,39 +265,16 @@ async function autoApproveAuthorization(session, authorizationId) {
             console.log('[AUTH] User creation completed');
         }
         
-        console.log('[AUTH] Calling approveAuthorization with ID:', authorizationId);
-        console.log('[AUTH] Full approval URL will be: /auth/v1/oauth/authorizations/' + authorizationId + '/consent');
+        // Redirect back to Supabase's authorize endpoint to complete the OAuth flow
+        // Supabase will see the user is authenticated (via cookies) and redirect back to Claude
+        const continueUrl = `${supabaseClient.supabaseUrl}/auth/v1/oauth/authorize?authorization_id=${authorizationId}`;
+        console.log('[AUTH] Redirecting to Supabase to complete OAuth:', continueUrl);
         
-        const { data, error } = await supabaseClient.auth.oauth.approveAuthorization(authorizationId);
+        window.location.href = continueUrl;
+        return true;
         
-        console.log('[AUTH] approveAuthorization response - data:', data);
-        console.log('[AUTH] approveAuthorization response - error:', error);
-        
-        if (error) {
-            console.error('[AUTH] Approval error:', error);
-            console.error('[AUTH] Error status:', error.status);
-            console.error('[AUTH] Error code:', error.code);
-            throw error;
-        }
-        
-        console.log('[AUTH] Authorization auto-approved successfully');
-        sessionStorage.removeItem('oauth_params');
-        
-        const redirectUrl = data.redirect_url || data.redirect_to;
-        console.log('[AUTH] Redirect URL from response:', redirectUrl);
-        
-        if (redirectUrl) {
-            console.log('[AUTH] Redirecting to:', redirectUrl);
-            window.location.href = redirectUrl;
-            return true;
-        } else {
-            console.error('[AUTH] No redirect URL in response');
-            return false;
-        }
     } catch (err) {
         console.error('[AUTH] Auto-approve failed:', err);
-        console.error('[AUTH] Error message:', err.message);
-        console.error('[AUTH] Error name:', err.name);
         throw err;
     }
 }
