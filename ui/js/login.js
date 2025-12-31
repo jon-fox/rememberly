@@ -1,55 +1,3 @@
-// Create user in DynamoDB via API - defined globally so it can be used before DOM loads
-async function createUserInDatabase(user, accessToken, username = null) {
-    console.log('>>>>> createUserInDatabase CALLED <<<<<');
-    console.log('User parameter:', user);
-    console.log('Access token (first 20 chars):', accessToken?.substring(0, 20) + '...');
-    console.log('Username parameter:', username);
-    
-    try {
-        const apiEndpoint = 'https://mcp.rememberly.xyz/users';
-        const payload = {
-            user_id: user.id,
-            email: user.email,
-            username: username || user.user_metadata?.full_name || user.email.split('@')[0]
-        };
-        
-        console.log('API Endpoint:', apiEndpoint);
-        console.log('Payload:', JSON.stringify(payload, null, 2));
-        console.log('Authorization header present:', !!accessToken);
-        
-        console.log('Sending fetch request...');
-        const response = await fetch(apiEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
-            },
-            body: JSON.stringify(payload)
-        });
-        
-        console.log('Fetch completed!');
-        console.log('Response status:', response.status);
-        console.log('Response statusText:', response.statusText);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-        
-        if (response.ok) {
-            const responseData = await response.json();
-            console.log('SUCCESS: User created/updated in DynamoDB:', responseData);
-            return true;
-        } else {
-            const errorText = await response.text();
-            console.error('FAILED: Status:', response.status, 'Response:', errorText);
-            return false;
-        }
-    } catch (error) {
-        console.error('EXCEPTION in createUserInDatabase:', error);
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        return false;
-    }
-}
-
 // Login page functionality
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('=== LOGIN PAGE LOADED ===');
@@ -83,10 +31,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('Has access token:', !!session?.access_token);
         
         if (user && session?.access_token) {
-            console.log('===== CALLING createUserInDatabase =====');
+            console.log('===== CALLING ensureUserInDatabase =====');
             // Try to create user in database (this is idempotent)
-            const result = await createUserInDatabase(user, session.access_token);
-            console.log('createUserInDatabase result:', result);
+            const result = await ensureUserInDatabase(user, session.access_token);
+            console.log('ensureUserInDatabase result:', result);
         } else {
             console.warn('Missing user or access token - user:', !!user, 'token:', !!session?.access_token);
         }
@@ -164,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Ensure user exists in DynamoDB
             if (session?.access_token) {
-                await createUserInDatabase(user, session.access_token);
+                await ensureUserInDatabase(user, session.access_token);
             }
             
             // Redirect to intended page
@@ -239,7 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Create user in DynamoDB via user service API (with JWT)
             if (session?.access_token) {
                 console.log('===== ATTEMPTING TO CREATE USER IN DATABASE =====');
-                const created = await createUserInDatabase(user, session.access_token, name);
+                const created = await ensureUserInDatabase(user, session.access_token, name);
                 console.log('===== CREATE USER RESULT:', created, '=====');
             } else {
                 console.warn('WARNING: No session token available - user will be created on first login');
@@ -286,16 +234,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     googleSignInBtn.addEventListener('click', async () => {
         try {
             setButtonLoading(googleSignInBtn, true);
-            
-            const { data, error } = await supabaseClient.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/index.html`
-                }
-            });
-            
-            if (error) throw error;
-            
+            await signInWithOAuth('google', `${window.location.origin}/index.html`);
             // Browser will redirect to Google OAuth
         } catch (error) {
             console.error('Google sign in error:', error);
@@ -308,16 +247,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     githubSignInBtn.addEventListener('click', async () => {
         try {
             setButtonLoading(githubSignInBtn, true);
-            
-            const { data, error } = await supabaseClient.auth.signInWithOAuth({
-                provider: 'github',
-                options: {
-                    redirectTo: `${window.location.origin}/index.html`
-                }
-            });
-            
-            if (error) throw error;
-            
+            await signInWithOAuth('github', `${window.location.origin}/index.html`);
             // Browser will redirect to GitHub OAuth
         } catch (error) {
             console.error('GitHub sign in error:', error);

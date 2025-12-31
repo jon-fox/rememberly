@@ -192,6 +192,63 @@ async function requireAuth(redirectUrl = 'login.html') {
     return true;
 }
 
+// Sign in with OAuth provider (Google, GitHub, etc.)
+async function signInWithOAuth(provider, redirectTo = null) {
+    if (!supabaseClient) {
+        throw new Error('Supabase client not initialized');
+    }
+    
+    const options = redirectTo ? { redirectTo } : {};
+    
+    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+        provider: provider,
+        options: options
+    });
+    
+    if (error) {
+        throw error;
+    }
+    
+    return data;
+}
+
+// Create or update user in DynamoDB
+async function ensureUserInDatabase(user, accessToken, username = null) {
+    if (!user || !accessToken) {
+        console.error('User or access token missing');
+        return false;
+    }
+    
+    try {
+        const apiEndpoint = 'https://mcp.rememberly.xyz/users';
+        const payload = {
+            user_id: user.id,
+            email: user.email,
+            username: username || user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0]
+        };
+        
+        const response = await fetch(apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (response.ok) {
+            console.log('User created/updated in DynamoDB successfully');
+            return true;
+        } else {
+            console.warn('Failed to create user in DynamoDB:', response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error creating user in DynamoDB:', error);
+        return false;
+    }
+}
+
 // Initialize immediately (don't wait for DOMContentLoaded)
 if (typeof supabase !== 'undefined') {
     initSupabase();

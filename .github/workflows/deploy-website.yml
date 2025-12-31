@@ -33,6 +33,8 @@ jobs:
 
       - name: Sync UI files to S3
         run: |
+          # Sync files to S3 and delete files that no longer exist in source control
+          # --delete flag removes files from S3 that have been deleted from the repo
           aws s3 sync ui/ s3://${{ vars.S3_WEBSITE_BUCKET_NAME }}/ \
             --delete \
             --exclude ".git/*" \

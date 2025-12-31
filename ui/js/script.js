@@ -5,50 +5,6 @@ let currentUser = null;
 // DOM elements - will be initialized after DOM loads
 let memoryInput, saveButton, memoryList, userMenu, userEmail, signOutBtn, signInBtn;
 
-// Create user in DynamoDB via API - ensures user exists in database
-async function ensureUserInDatabase(user, accessToken) {
-    console.log('>>>>> ensureUserInDatabase CALLED <<<<<');
-    console.log('User:', user);
-    console.log('Has token:', !!accessToken);
-    
-    try {
-        const apiEndpoint = 'https://mcp.rememberly.xyz/users';
-        const payload = {
-            user_id: user.id,
-            email: user.email,
-            username: user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0]
-        };
-        
-        console.log('API Endpoint:', apiEndpoint);
-        console.log('Payload:', JSON.stringify(payload, null, 2));
-        console.log('Sending fetch request to create user...');
-        
-        const response = await fetch(apiEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
-            },
-            body: JSON.stringify(payload)
-        });
-        
-        console.log('Response status:', response.status);
-        
-        if (response.ok) {
-            const responseData = await response.json();
-            console.log('SUCCESS: User created/updated in DynamoDB:', responseData);
-            return true;
-        } else {
-            const errorText = await response.text();
-            console.error('FAILED: Failed to create user. Status:', response.status, 'Response:', errorText);
-            return false;
-        }
-    } catch (error) {
-        console.error('EXCEPTION: Exception creating user:', error);
-        return false;
-    }
-}
-
 // Initialize authentication state
 async function initAuth() {
     console.log('=== INDEX PAGE: initAuth called ===');

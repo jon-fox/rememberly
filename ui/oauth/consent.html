@@ -133,98 +133,55 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/config.js"></script>
-    <script src="/auth.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/auth.js"></script>
     <script>
         console.log('================================');
         console.log('PAGE: /oauth/consent.html LOADED');
         console.log('================================');
-        console.log('[CONSENT] Full URL:', window.location.href);
-        console.log('[CONSENT] Origin:', window.location.origin);
-        console.log('[CONSENT] Protocol:', window.location.protocol);
-        console.log('[CONSENT] Host:', window.location.host);
-        console.log('[CONSENT] Pathname:', window.location.pathname);
-        console.log('[CONSENT] Document referrer (where we came from):', document.referrer);
         
         let oauthParams = {};
-
-        // Initialize Supabase client using auth.js
-        function initializeSupabase() {
-            console.log('[CONSENT] initializeSupabase() called');
-            const client = initSupabase();
-            if (!client) {
-                console.error('[CONSENT] Failed to initialize Supabase client');
-                showError('Supabase configuration missing. Please configure your anon key.');
-                return false;
-            }
-            console.log('[CONSENT] Supabase client initialized successfully');
-            return true;
-        }
-
-        // Get the supabaseClient from auth.js
-        function getSupabaseClient() {
-            return supabaseClient || initSupabase();
-        }
 
         async function loadAuthorizationRequest() {
             console.log('[CONSENT] ========== loadAuthorizationRequest() CALLED ==========');
             try {
-                // Initialize Supabase
-                if (!initializeSupabase()) {
-                    console.error('[CONSENT] Failed to initialize Supabase, aborting');
-                    return;
+                // Initialize Supabase (from auth.js)
+                if (!supabaseClient) {
+                    initSupabase();
                 }
-
-                const client = getSupabaseClient();
                 
-                // Listen for auth state changes - this fires when session is established from URL
+                // Listen for auth state changes
                 console.log('[CONSENT] Setting up auth state listener...');
-                client.auth.onAuthStateChange((event, session) => {
+                supabaseClient.auth.onAuthStateChange((event, session) => {
                     console.log('[CONSENT] AUTH STATE CHANGE EVENT:', event);
-                    console.log('[CONSENT] Session from event:', session ? 'EXISTS' : 'NULL');
                     if (session) {
                         console.log('[CONSENT] Session user:', session.user.email);
-                        console.log('[CONSENT] Auth state change detected - reloading page to show consent');
                         window.location.reload();
                     }
                 });
                 
-                // Wait a moment for Supabase to process URL hash
-                console.log('[CONSENT] Waiting for session initialization...');
+                // Wait for session initialization
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
                 // Parse OAuth parameters from URL
                 const params = new URLSearchParams(window.location.search);
-                
-                console.log('[CONSENT] URL parameters:', Object.fromEntries(params));
-                console.log('[CONSENT] URL hash:', window.location.hash);
-                
-                // Supabase sends authorization_id
                 const authorizationId = params.get('authorization_id');
-                console.log('[CONSENT] authorization_id:', authorizationId);
-                
-                oauthParams = {
-                    authorization_id: authorizationId
-                };
-
-                console.log('[CONSENT] Parsed oauthParams:', oauthParams);
-
-                // Display client name if available
                 const clientName = params.get('client_name') || 'An application';
+                
+                oauthParams = { authorization_id: authorizationId };
+                
+                console.log('[CONSENT] OAuth params:', oauthParams);
                 console.log('[CONSENT] Client name:', clientName);
+                
                 document.getElementById('client-name').textContent = clientName;
                 document.getElementById('consent-client-name').textContent = clientName;
 
-                // Check if user is already authenticated
-                console.log('[CONSENT] Checking authentication...');
-                const { data: { session }, error: sessionError } = await client.auth.getSession();
-                console.log('[CONSENT] Session exists:', !!session);
-                console.log('[CONSENT] Session error:', sessionError);
+                // Check authentication status
+                const session = await getCurrentSession();
                 
                 if (session?.user) {
                     // User is authenticated - show consent screen
                     console.log('[CONSENT] ✓ AUTHENTICATED:', session.user.email);
-                    document.getElementById('consent-client-name').textContent = clientName;
                     document.getElementById('user-email').textContent = session.user.email;
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('consent-section').style.display = 'block';
@@ -237,8 +194,7 @@
                 }
 
             } catch (err) {
-                console.error('[CONSENT] ✗ ERROR in loadAuthorizationRequest:', err);
-                console.error('[CONSENT] Error stack:', err.stack);
+                console.error('[CONSENT] ✗ ERROR:', err);
                 showError('Failed to load authorization request');
             }
         }
@@ -270,17 +226,8 @@
                     const password = document.getElementById('loginPassword').value;
 
                     try {
-                        const client = getSupabaseClient();
-                        const { data, error } = await client.auth.signInWithPassword({
-                            email: email,
-                            password: password
-                        });
-
-                        if (error) throw error;
-
-                        // Reload to show consent screen
+                        await signIn(email, password); // Using auth.js function
                         window.location.reload();
-
                     } catch (error) {
                         console.error('Login error:', error);
                         if (loginError) loginError.textContent = error.message || 'Failed to sign in';
@@ -290,22 +237,14 @@
 
             // OAuth buttons - redirect back to consent page after OAuth
             const consentUrl = window.location.href.split('?')[0];
+            const params = new URLSearchParams(window.location.search);
             
             const googleBtn = document.getElementById('googleSignIn');
             if (googleBtn) {
                 googleBtn.addEventListener('click', async () => {
                     try {
-                        // Store OAuth params for after redirect
-                        const params = new URLSearchParams(window.location.search);
                         sessionStorage.setItem('oauth_params', JSON.stringify(Object.fromEntries(params)));
-                        const client = getSupabaseClient();
-                        const { data, error } = await client.auth.signInWithOAuth({
-                            provider: 'google',
-                            options: {
-                                redirectTo: consentUrl
-                            }
-                        });
-                        if (error) throw error;
+                        await signInWithOAuth('google', consentUrl); // Using auth.js function
                     } catch (error) {
                         console.error('Google OAuth error:', error);
                         showError('Failed to sign in with Google');
@@ -317,17 +256,8 @@
             if (githubBtn) {
                 githubBtn.addEventListener('click', async () => {
                     try {
-                        // Store OAuth params for after redirect
-                        const params = new URLSearchParams(window.location.search);
                         sessionStorage.setItem('oauth_params', JSON.stringify(Object.fromEntries(params)));
-                        const client = getSupabaseClient();
-                        const { data, error } = await client.auth.signInWithOAuth({
-                            provider: 'github',
-                            options: {
-                                redirectTo: consentUrl
-                            }
-                        });
-                        if (error) throw error;
+                        await signInWithOAuth('github', consentUrl); // Using auth.js function
                     } catch (error) {
                         console.error('GitHub OAuth error:', error);
                         showError('Failed to sign in with GitHub');
@@ -335,7 +265,7 @@
                 });
             }
 
-            // Restore OAuth params from session storage if coming back from OAuth login
+            // Restore OAuth params from session storage
             const storedParams = sessionStorage.getItem('oauth_params');
             if (storedParams && !window.location.search) {
                 const params = JSON.parse(storedParams);
@@ -343,120 +273,58 @@
                 window.history.replaceState({}, '', `${window.location.pathname}?${query}`);
             }
 
-            // Load the authorization request
             loadAuthorizationRequest();
         });
 
         window.approveAuthorization = async function() {
             try {
                 console.log('=== APPROVE BUTTON CLICKED ===');
-                console.log('oauthParams:', oauthParams);
                 
-                const client = getSupabaseClient();
+                const user = await getCurrentUser(); // Using auth.js function
+                const session = await getCurrentSession(); // Using auth.js function
                 
-                // Get current user and session
-                const { data: { user }, error: userError } = await client.auth.getUser();
-                const { data: { session }, error: sessionError } = await client.auth.getSession();
-                
-                console.log('User:', user);
-                console.log('Session:', session);
-                
-                if (userError || !user) {
-                    console.error('User authentication error:', userError);
+                if (!user) {
                     showError('User authentication error');
                     return;
                 }
 
-                // Create user in DynamoDB before approving authorization
+                // Create user in DynamoDB
                 if (session?.access_token) {
-                    console.log('Creating user in DynamoDB during OAuth consent approval...');
-                    try {
-                        const apiEndpoint = 'https://mcp.rememberly.xyz/users';
-                        const payload = {
-                            user_id: user.id,
-                            email: user.email,
-                            username: user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0]
-                        };
-                        
-                        console.log('Calling user creation API with payload:', payload);
-                        
-                        const response = await fetch(apiEndpoint, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${session.access_token}`
-                            },
-                            body: JSON.stringify(payload)
-                        });
-                        
-                        console.log('User creation response status:', response.status);
-                        
-                        if (response.ok) {
-                            console.log('User created/updated in DynamoDB successfully');
-                        } else {
-                            console.warn('Failed to create user in DynamoDB:', response.status);
-                            // Continue anyway - don't block authorization
-                        }
-                    } catch (userCreateError) {
-                        console.error('Error creating user in DynamoDB:', userCreateError);
-                        // Continue anyway - don't block authorization
-                    }
+                    console.log('Creating user in DynamoDB...');
+                    await ensureUserInDatabase(user, session.access_token); // Using auth.js function
                 }
                 
-                console.log('About to call approveAuthorization with authorization_id:', oauthParams.authorization_id);
+                console.log('Approving authorization...');
                 
-                // Use Supabase JS library to approve authorization
-                const { data, error } = await client.auth.oauth.approveAuthorization(oauthParams.authorization_id);
+                const { data, error } = await supabaseClient.auth.oauth.approveAuthorization(oauthParams.authorization_id);
                 
-                console.log('approveAuthorization response - data:', data);
-                console.log('approveAuthorization response - error:', error);
-                
-                if (error) {
-                    console.error('Authorization approval error:', error);
-                    throw error;
-                }
+                if (error) throw error;
                 
                 console.log('Authorization approved successfully!');
-                
-                // Clear session storage
                 sessionStorage.removeItem('oauth_params');
                 
-                // Redirect back to client with authorization code
                 const redirectUrl = data.redirect_url || data.redirect_to;
-                console.log('Redirect URL:', redirectUrl);
-                
                 if (redirectUrl) {
-                    console.log('Redirecting to:', redirectUrl);
                     window.location.href = redirectUrl;
                 } else {
-                    console.error('No redirect URL in response');
                     showError('No redirect URL provided');
                 }
 
             } catch (err) {
-                console.error('Error in approveAuthorization:', err);
-                console.error('Error stack:', err.stack);
+                console.error('Error approving authorization:', err);
                 showError(err.message || 'Failed to approve authorization');
             }
         };
 
         window.denyAuthorization = async function() {
             try {
-                const client = getSupabaseClient();
+                const { data, error } = await supabaseClient.auth.oauth.denyAuthorization(oauthParams.authorization_id);
                 
-                // Use Supabase JS library to deny authorization
-                const { data, error } = await client.auth.oauth.denyAuthorization(oauthParams.authorization_id);
+                if (error) throw error;
                 
-                if (error) {
-                    throw error;
-                }
-                
-                console.log('Authorization denied:', data);
-                
-                // Clear session storage
+                console.log('Authorization denied');
                 sessionStorage.removeItem('oauth_params');
                 
-                // Redirect back to client with error
                 if (data.redirect_url) {
                     window.location.href = data.redirect_url;
                 } else {
