@@ -255,6 +255,7 @@ async function autoApproveAuthorization(session, authorizationId) {
         console.log('[AUTH] Auto-approve started');
         console.log('[AUTH] Session user:', session.user.email);
         console.log('[AUTH] authorization_id:', authorizationId);
+        console.log('[AUTH] Supabase URL:', supabaseClient.supabaseUrl);
         
         const user = session.user;
         
@@ -266,6 +267,8 @@ async function autoApproveAuthorization(session, authorizationId) {
         }
         
         console.log('[AUTH] Calling approveAuthorization with ID:', authorizationId);
+        console.log('[AUTH] Full approval URL will be: /auth/v1/oauth/authorizations/' + authorizationId + '/consent');
+        
         const { data, error } = await supabaseClient.auth.oauth.approveAuthorization(authorizationId);
         
         console.log('[AUTH] approveAuthorization response - data:', data);
@@ -273,6 +276,8 @@ async function autoApproveAuthorization(session, authorizationId) {
         
         if (error) {
             console.error('[AUTH] Approval error:', error);
+            console.error('[AUTH] Error status:', error.status);
+            console.error('[AUTH] Error code:', error.code);
             throw error;
         }
         
@@ -293,6 +298,7 @@ async function autoApproveAuthorization(session, authorizationId) {
     } catch (err) {
         console.error('[AUTH] Auto-approve failed:', err);
         console.error('[AUTH] Error message:', err.message);
+        console.error('[AUTH] Error name:', err.name);
         throw err;
     }
 }

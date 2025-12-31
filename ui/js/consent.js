@@ -41,9 +41,14 @@ async function loadAuthorizationRequest() {
         document.getElementById('client-name').textContent = clientName;
         document.getElementById('consent-client-name').textContent = clientName;
 
+        // Check if we just came back from OAuth provider (has hash fragment)
+        const hasOAuthCallback = window.location.hash.includes('access_token') || window.location.hash.includes('error');
+        console.log('[CONSENT] Has OAuth callback in URL?', hasOAuthCallback);
+        
         // Wait for session initialization (especially after OAuth redirect)
-        console.log('[CONSENT] Waiting for session to initialize...');
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const waitTime = hasOAuthCallback ? 2500 : 500;
+        console.log(`[CONSENT] Waiting ${waitTime}ms for session to initialize...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
         console.log('[CONSENT] Done waiting, checking session now...');
 
         // Check authentication status
@@ -51,6 +56,8 @@ async function loadAuthorizationRequest() {
         console.log('[CONSENT] Session check result:', session ? 'SESSION EXISTS' : 'NO SESSION');
         if (session?.user) {
             console.log('[CONSENT] User email:', session.user.email);
+            console.log('[CONSENT] User created at:', session.user.created_at);
+            console.log('[CONSENT] Just came back from OAuth?', hasOAuthCallback);
         }
         
         if (session?.user) {
