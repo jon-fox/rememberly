@@ -156,12 +156,15 @@
                     console.log('[CONSENT] AUTH STATE CHANGE EVENT:', event);
                     if (session) {
                         console.log('[CONSENT] Session user:', session.user.email);
+                        console.log('[CONSENT] Reloading page after auth state change...');
                         window.location.reload();
                     }
                 });
                 
-                // Wait for session initialization
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Wait longer for session initialization (especially after OAuth redirect)
+                console.log('[CONSENT] Waiting 3 seconds for session to initialize...');
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                console.log('[CONSENT] Done waiting, checking session now...');
 
                 // Parse OAuth parameters from URL
                 const params = new URLSearchParams(window.location.search);
@@ -178,31 +181,39 @@
 
                 // Check authentication status
                 const session = await getCurrentSession();
+                console.log('[CONSENT] Session check result:', session ? 'SESSION EXISTS' : 'NO SESSION');
+                if (session?.user) {
+                    console.log('[CONSENT] User email:', session.user.email);
+                }
                 
                 if (session?.user) {
                     // User is authenticated - auto-approve for first-party MCP connections
-                    console.log('[CONSENT] ✓ AUTHENTICATED:', session.user.email);
+                    console.log('[CONSENT] AUTHENTICATED:', session.user.email);
+                    console.log('[CONSENT] Client name for check:', clientName);
                     
                     // Check if this is the first-party MCP server (auto-approve)
                     if (clientName.toLowerCase().includes('rememberly') || clientName === 'An application') {
-                        console.log('[CONSENT] First-party app detected - auto-approving');
+                        console.log('[CONSENT] First-party app detected - will auto-approve');
+                        console.log('[CONSENT] Calling autoApproveAuthorization...');
                         await autoApproveAuthorization(session);
+                        console.log('[CONSENT] autoApproveAuthorization completed (or failed)');
                     } else {
                         // Third-party app - show consent screen
+                        console.log('[CONSENT] Third-party app - showing consent screen');
                         document.getElementById('user-email').textContent = session.user.email;
                         document.getElementById('loading').style.display = 'none';
                         document.getElementById('consent-section').style.display = 'block';
                     }
                 } else {
                     // User is not authenticated - show login form
-                    console.log('[CONSENT] ✗ NOT AUTHENTICATED - showing login');
+                    console.log('[CONSENT] NOT AUTHENTICATED - showing login');
                     sessionStorage.setItem('oauth_params', JSON.stringify(oauthParams));
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('auth-section').style.display = 'block';
                 }
 
             } catch (err) {
-                console.error('[CONSENT] ✗ ERROR:', err);
+                console.error('[CONSENT] ERROR:', err);
                 showError('Failed to load authorization request');
             }
         }
@@ -276,9 +287,8 @@
             // Restore OAuth params from session storage
             const storedParams = sessionStorage.getItem('oauth_params');
             if (storedParams && !window.location.search) {
-                const params = JSON.parse(storedParams);
-                const query = new URLSearchParams(params).toString();
-                window.history.replaceState({}, '', `${window.location.pathname}?${query}`);
+                const restoredParams = new URLSearchParams(JSON.parse(storedParams));
+                window.location.search = restoredParams.toString();
             }
 
             loadAuthorizationRequest();
@@ -287,32 +297,50 @@
         // Auto-approve function for first-party apps
         async function autoApproveAuthorization(session) {
             try {
-                console.log('[CONSENT] Auto-approving first-party authorization');
+                console.log('[CONSENT] ========== AUTO APPROVE STARTED ==========');
+                console.log('[CONSENT] Session user:', session.user.email);
+                console.log('[CONSENT] authorization_id:', oauthParams.authorization_id);
                 
                 const user = session.user;
                 
                 // Create user in DynamoDB
                 if (session?.access_token) {
-                    console.log('Creating user in DynamoDB...');
+                    console.log('[CONSENT] Creating user in DynamoDB...');
                     await ensureUserInDatabase(user, session.access_token);
+                    console.log('[CONSENT] User creation completed');
                 }
                 
+                console.log('[CONSENT] Calling approveAuthorization with ID:', oauthParams.authorization_id);
                 const { data, error } = await supabaseClient.auth.oauth.approveAuthorization(oauthParams.authorization_id);
                 
-                if (error) throw error;
+                console.log('[CONSENT] approveAuthorization response - data:', data);
+                console.log('[CONSENT] approveAuthorization response - error:', error);
                 
-                console.log('Authorization auto-approved successfully!');
+                if (error) {
+                    console.error('[CONSENT] Approval error:', error);
+                    throw error;
+                }
+                
+                console.log('[CONSENT] Authorization auto-approved successfully!');
                 sessionStorage.removeItem('oauth_params');
                 
                 const redirectUrl = data.redirect_url || data.redirect_to;
+                console.log('[CONSENT] Redirect URL from response:', redirectUrl);
+                
                 if (redirectUrl) {
+                    console.log('[CONSENT] Redirecting to:', redirectUrl);
                     window.location.href = redirectUrl;
                 } else {
+                    console.error('[CONSENT] No redirect URL in response!');
                     showError('No redirect URL provided');
                 }
             } catch (err) {
-                console.error('Error auto-approving authorization:', err);
+                console.error('[CONSENT] ========== AUTO APPROVE FAILED ==========');
+                console.error('[CONSENT] Error details:', err);
+                console.error('[CONSENT] Error message:', err.message);
+                console.error('[CONSENT] Error stack:', err.stack);
                 // Fall back to showing consent screen
+                console.log('[CONSENT] Falling back to manual consent screen');
                 document.getElementById('user-email').textContent = session.user.email;
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('consent-section').style.display = 'block';
