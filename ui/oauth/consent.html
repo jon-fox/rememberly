@@ -178,6 +178,24 @@
                     return;
                 }
 
+                const client = getSupabaseClient();
+                
+                // Listen for auth state changes - this fires when session is established from URL
+                console.log('[CONSENT] Setting up auth state listener...');
+                client.auth.onAuthStateChange((event, session) => {
+                    console.log('[CONSENT] AUTH STATE CHANGE EVENT:', event);
+                    console.log('[CONSENT] Session from event:', session ? 'EXISTS' : 'NULL');
+                    if (session) {
+                        console.log('[CONSENT] Session user:', session.user.email);
+                        console.log('[CONSENT] Auth state change detected - reloading page to show consent');
+                        window.location.reload();
+                    }
+                });
+                
+                // Wait a moment for Supabase to process URL hash
+                console.log('[CONSENT] Waiting for session initialization...');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
                 // Parse OAuth parameters from URL
                 const params = new URLSearchParams(window.location.search);
                 
@@ -200,66 +218,25 @@
                 document.getElementById('client-name').textContent = clientName;
                 document.getElementById('consent-client-name').textContent = clientName;
 
-                const client = getSupabaseClient();
-                
-                // IMPORTANT: Wait for Supabase to process OAuth callback from URL hash
-                // This is critical when redirecting back from OAuth providers (Google/GitHub)
-                console.log('[CONSENT] Waiting for Supabase to process session from URL...');
-                
-                // Give Supabase a moment to process the hash fragment
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
                 // Check if user is already authenticated
-                console.log('[CONSENT] Checking user authentication status...');
-                console.log('[CONSENT] Got Supabase client:', !!client);
+                console.log('[CONSENT] Checking authentication...');
+                const { data: { session }, error: sessionError } = await client.auth.getSession();
+                console.log('[CONSENT] Session exists:', !!session);
+                console.log('[CONSENT] Session error:', sessionError);
                 
-                // Check localStorage first
-                console.log('[CONSENT] Checking localStorage...');
-                console.log('[CONSENT] localStorage keys:', Object.keys(localStorage));
-                const authToken = localStorage.getItem('rememberly-auth-token');
-                console.log('[CONSENT] Auth token in localStorage:', authToken ? 'EXISTS (length: ' + authToken.length + ')' : 'MISSING');
-                
-                // Try to get session
-                console.log('[CONSENT] Calling getSession()...');
-                const { data: sessionData, error: sessionError } = await client.auth.getSession();
-                console.log('[CONSENT] getSession() result:');
-                console.log('[CONSENT]   - session exists:', !!sessionData.session);
-                console.log('[CONSENT]   - session error:', sessionError);
-                if (sessionData.session) {
-                    console.log('[CONSENT]   - session user:', sessionData.session.user?.email);
-                    console.log('[CONSENT]   - access_token exists:', !!sessionData.session.access_token);
-                }
-                
-                // Try to get user
-                console.log('[CONSENT] Calling getUser()...');
-                const { data: { user }, error: userError } = await client.auth.getUser();
-                
-                console.log('[CONSENT] getUser() result:');
-                console.log('[CONSENT]   - user:', user ? `${user.email} (${user.id})` : 'null');
-                console.log('[CONSENT]   - error:', userError);
-                
-                if (user) {
-                    // User is authenticated - show consent screen directly
-                    console.log('[CONSENT] ✓ USER IS AUTHENTICATED - showing consent screen');
-                    
-                    // Update UI with user details
+                if (session?.user) {
+                    // User is authenticated - show consent screen
+                    console.log('[CONSENT] ✓ AUTHENTICATED:', session.user.email);
                     document.getElementById('consent-client-name').textContent = clientName;
-                    document.getElementById('user-email').textContent = user.email;
+                    document.getElementById('user-email').textContent = session.user.email;
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('consent-section').style.display = 'block';
-                    console.log('[CONSENT] Consent UI updated and displayed');
                 } else {
-                    // User is not authenticated - show auth section
-                    console.log('[CONSENT] ✗ USER NOT AUTHENTICATED - showing login form');
-                    console.log('[CONSENT] This means the session was lost or not yet established');
-                    
-                    // Store OAuth params in session storage for after authentication
+                    // User is not authenticated - show login form
+                    console.log('[CONSENT] ✗ NOT AUTHENTICATED - showing login');
                     sessionStorage.setItem('oauth_params', JSON.stringify(oauthParams));
-                    console.log('[CONSENT] Stored oauth_params in sessionStorage');
-                    
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('auth-section').style.display = 'block';
-                    console.log('[CONSENT] Login form UI displayed');
                 }
 
             } catch (err) {
