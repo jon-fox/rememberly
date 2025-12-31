@@ -24,18 +24,24 @@ async function loadAuthorizationRequest() {
         
         // Parse OAuth parameters from URL first
         const params = new URLSearchParams(window.location.search);
+        
+        // Log everything to understand the flow
+        console.log('[CONSENT] Full URL:', window.location.href);
+        console.log('[CONSENT] All params:', Object.fromEntries(params.entries()));
+        
         const authorizationId = params.get('authorization_id');
         const clientName = params.get('client_name') || 'An application';
         const redirectUri = params.get('redirect_uri');
         const state = params.get('state');
+        const scope = params.get('scope');
         
         oauthParams = { 
             authorization_id: authorizationId,
             redirect_uri: redirectUri,
-            state: state
+            state: state,
+            scope: scope
         };
         
-        console.log('[CONSENT] Full URL:', window.location.href);
         console.log('[CONSENT] OAuth params:', oauthParams);
         console.log('[CONSENT] Client name:', clientName);
         
@@ -77,7 +83,7 @@ async function loadAuthorizationRequest() {
                 console.log('[CONSENT] First-party app detected - will auto-approve');
                 approvalInProgress = true;
                 try {
-                    await autoApproveAuthorization(session, authorizationId, redirectUri);
+                    await autoApproveAuthorization(session, authorizationId);
                     // If we get here, approval succeeded and we're being redirected
                     // No need to do anything else
                 } catch (err) {

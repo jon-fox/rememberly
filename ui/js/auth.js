@@ -250,12 +250,11 @@ async function ensureUserInDatabase(user, accessToken, username = null) {
 }
 
 // Auto-approve OAuth authorization for first-party apps
-async function autoApproveAuthorization(session, authorizationId, redirectUri) {
+async function autoApproveAuthorization(session, authorizationId) {
     try {
         console.log('[AUTH] Auto-approve started');
         console.log('[AUTH] Session user:', session.user.email);
         console.log('[AUTH] authorization_id:', authorizationId);
-        console.log('[AUTH] redirect_uri:', redirectUri);
         
         const user = session.user;
         
@@ -266,15 +265,14 @@ async function autoApproveAuthorization(session, authorizationId, redirectUri) {
             console.log('[AUTH] User creation completed');
         }
         
-        // Build redirect URL with authorization code (using the JWT as the code)
-        const redirectUrl = new URL(redirectUri);
-        redirectUrl.searchParams.set('code', session.access_token);
-        if (oauthParams.state) {
-            redirectUrl.searchParams.set('state', oauthParams.state);
-        }
+        console.log('[AUTH] User authenticated and created. Redirecting back to MCP server...');
         
-        console.log('[AUTH] Redirecting to:', redirectUrl.toString());
-        window.location.href = redirectUrl.toString();
+        // Redirect back to MCP server callback with the authorization_id and access token
+        const callbackUrl = `https://mcp.rememberly.xyz/mcp/callback?authorization_id=${authorizationId}&access_token=${session.access_token}`;
+        
+        console.log('[AUTH] Redirecting to:', callbackUrl);
+        window.location.href = callbackUrl;
+        
         return true;
         
     } catch (err) {
