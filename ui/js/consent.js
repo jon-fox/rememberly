@@ -5,9 +5,17 @@ console.log('PAGE: /oauth/consent.html LOADED');
 console.log('================================');
 
 let oauthParams = {};
+let approvalInProgress = false;
 
 async function loadAuthorizationRequest() {
     console.log('[CONSENT] loadAuthorizationRequest() called');
+    
+    // Prevent multiple simultaneous calls
+    if (approvalInProgress) {
+        console.log('[CONSENT] Approval already in progress, skipping...');
+        return;
+    }
+    
     try {
         // Initialize Supabase (from auth.js)
         if (!supabaseClient) {
@@ -53,11 +61,22 @@ async function loadAuthorizationRequest() {
             // Check if this is the first-party MCP server (auto-approve)
             if (clientName.toLowerCase().includes('rememberly') || clientName === 'An application') {
                 console.log('[CONSENT] First-party app detected - will auto-approve');
+                approvalInProgress = true;
                 try {
                     await autoApproveAuthorization(session, authorizationId);
+                    // If we get here, approval succeeded and we're being redirected
+                    // No need to do anything else
                 } catch (err) {
-                    console.error('[CONSENT] Auto-approve failed, falling back to manual consent');
-                    showConsentScreen(session.user.email);
+                    approvalInProgress = false;
+                    console.error('[CONSENT] Auto-approve failed:', err);
+                    // Check if it's because authorization was already used/expired
+                    if (err.message && err.message.includes('not found')) {
+                        showError('This authorization request has expired or already been used. Please try connecting again.');
+                    } else {
+                        // For other errors, show manual consent as fallback
+                        console.log('[CONSENT] Showing manual consent as fallback');
+                        showConsentScreen(session.user.email);
+                    }
                 }
             } else {
                 // Third-party app - show consent screen
@@ -159,18 +178,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Button handlers that call auth.js functions
 window.handleApproveClick = async function() {
+    if (approvalInProgress) {
+        console.log('[CONSENT] Approval already in progress');
+        return;
+    }
+    
+    approvalInProgress = true;
     try {
         const session = await getCurrentSession();
         await approveAuthorization(oauthParams.authorization_id, session);
     } catch (err) {
+        approvalInProgress = false;
         showError(err.message || 'Failed to approve authorization');
     }
 };
 
 window.handleDenyClick = async function() {
+    if (approvalInProgress) {
+        console.log('[CONSENT] Operation already in progress');
+        return;
+    }
+    
+    approvalInProgress = true;
     try {
         await denyAuthorization(oauthParams.authorization_id);
     } catch (err) {
+        approvalInProgress = false;
         showError(err.message || 'Failed to deny authorization');
     }
 };
