@@ -84,7 +84,12 @@ async function loadAuthorizationRequest() {
                     const errorMsg = err.message?.toLowerCase() || '';
                     const errorCode = err.code?.toLowerCase() || '';
                     
+                    console.log('[CONSENT] Checking error - msg includes "not found":', errorMsg.includes('not found'));
+                    console.log('[CONSENT] Checking error - code includes "not_found":', errorCode.includes('not_found'));
+                    console.log('[CONSENT] Checking error - code includes "authorization_not_found":', errorCode.includes('authorization_not_found'));
+                    
                     if (errorMsg.includes('not found') || errorCode.includes('not_found') || errorCode.includes('authorization_not_found')) {
+                        console.log('[CONSENT] Showing "authorization expired" error message');
                         showError('This authorization request has expired or already been used. Please try connecting again.');
                     } else {
                         // For other errors, show manual consent as fallback
@@ -128,6 +133,8 @@ function showError(message) {
         loginError.textContent = message;
     }
     document.getElementById('loading').style.display = 'none';
+    document.getElementById('auth-section').style.display = 'none';
+    document.getElementById('consent-section').style.display = 'none';
 }
 
 // Handle email/password login
