@@ -18,8 +18,8 @@ def get_supabase_auth() -> SupabaseProvider:
     project_url = os.getenv(
         "SUPABASE_PROJECT_URL", "https://ijyyifghxitisjbfnoxb.supabase.co"
     )
-    # base_url is your FastMCP server URL (where MCP endpoint is hosted)
-    base_url = os.getenv("MCP_BASE_URL", "https://mcp.rememberly.xyz/mcp")
+    # base_url is your FastMCP server's base domain (not including /mcp path)
+    base_url = os.getenv("MCP_BASE_URL", "https://mcp.rememberly.xyz")
 
     return SupabaseProvider(
         project_url=project_url,
