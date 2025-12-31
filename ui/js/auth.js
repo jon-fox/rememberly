@@ -250,11 +250,12 @@ async function ensureUserInDatabase(user, accessToken, username = null) {
 }
 
 // Auto-approve OAuth authorization for first-party apps
-async function autoApproveAuthorization(session, authorizationId) {
+async function autoApproveAuthorization(session, authorizationId, oauthParams) {
     try {
         console.log('[AUTH] Auto-approve started');
         console.log('[AUTH] Session user:', session.user.email);
         console.log('[AUTH] authorization_id:', authorizationId);
+        console.log('[AUTH] OAuth params:', oauthParams);
         
         const user = session.user;
         
@@ -265,12 +266,25 @@ async function autoApproveAuthorization(session, authorizationId) {
             console.log('[AUTH] User creation completed');
         }
         
-        // Redirect back to Supabase's authorize endpoint to complete the OAuth flow
-        // Supabase will see the user is authenticated (via cookies) and redirect back to Claude
-        const continueUrl = `${supabaseClient.supabaseUrl}/auth/v1/oauth/authorize?authorization_id=${authorizationId}`;
-        console.log('[AUTH] Redirecting to Supabase to complete OAuth:', continueUrl);
+        // Build the continue URL with all original OAuth parameters
+        const continueUrl = new URL(`${supabaseClient.supabaseUrl}/auth/v1/oauth/authorize`);
+        continueUrl.searchParams.set('authorization_id', authorizationId);
         
-        window.location.href = continueUrl;
+        // Pass through all original OAuth parameters from Claude
+        if (oauthParams.redirect_uri) {
+            continueUrl.searchParams.set('redirect_uri', oauthParams.redirect_uri);
+        }
+        if (oauthParams.state) {
+            continueUrl.searchParams.set('state', oauthParams.state);
+        }
+        if (oauthParams.scope) {
+            continueUrl.searchParams.set('scope', oauthParams.scope);
+        }
+        
+        console.log('[AUTH] Redirecting to Supabase to complete OAuth:', continueUrl.toString());
+        
+        // Redirect back to Supabase - it will see user is authenticated and redirect to Claude
+        window.location.href = continueUrl.toString();
         return true;
         
     } catch (err) {

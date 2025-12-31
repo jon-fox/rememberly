@@ -83,7 +83,7 @@ async function loadAuthorizationRequest() {
                 console.log('[CONSENT] First-party app detected - will auto-approve');
                 approvalInProgress = true;
                 try {
-                    await autoApproveAuthorization(session, authorizationId);
+                    await autoApproveAuthorization(session, authorizationId, oauthParams);
                     // If we get here, approval succeeded and we're being redirected
                     // No need to do anything else
                 } catch (err) {
