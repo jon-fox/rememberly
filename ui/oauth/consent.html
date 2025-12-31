@@ -180,11 +180,19 @@
                 const session = await getCurrentSession();
                 
                 if (session?.user) {
-                    // User is authenticated - show consent screen
+                    // User is authenticated - auto-approve for first-party MCP connections
                     console.log('[CONSENT] ✓ AUTHENTICATED:', session.user.email);
-                    document.getElementById('user-email').textContent = session.user.email;
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('consent-section').style.display = 'block';
+                    
+                    // Check if this is the first-party MCP server (auto-approve)
+                    if (clientName.toLowerCase().includes('rememberly') || clientName === 'An application') {
+                        console.log('[CONSENT] First-party app detected - auto-approving');
+                        await autoApproveAuthorization(session);
+                    } else {
+                        // Third-party app - show consent screen
+                        document.getElementById('user-email').textContent = session.user.email;
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('consent-section').style.display = 'block';
+                    }
                 } else {
                     // User is not authenticated - show login form
                     console.log('[CONSENT] ✗ NOT AUTHENTICATED - showing login');
@@ -275,6 +283,41 @@
 
             loadAuthorizationRequest();
         });
+
+        // Auto-approve function for first-party apps
+        async function autoApproveAuthorization(session) {
+            try {
+                console.log('[CONSENT] Auto-approving first-party authorization');
+                
+                const user = session.user;
+                
+                // Create user in DynamoDB
+                if (session?.access_token) {
+                    console.log('Creating user in DynamoDB...');
+                    await ensureUserInDatabase(user, session.access_token);
+                }
+                
+                const { data, error } = await supabaseClient.auth.oauth.approveAuthorization(oauthParams.authorization_id);
+                
+                if (error) throw error;
+                
+                console.log('Authorization auto-approved successfully!');
+                sessionStorage.removeItem('oauth_params');
+                
+                const redirectUrl = data.redirect_url || data.redirect_to;
+                if (redirectUrl) {
+                    window.location.href = redirectUrl;
+                } else {
+                    showError('No redirect URL provided');
+                }
+            } catch (err) {
+                console.error('Error auto-approving authorization:', err);
+                // Fall back to showing consent screen
+                document.getElementById('user-email').textContent = session.user.email;
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('consent-section').style.display = 'block';
+            }
+        }
 
         window.approveAuthorization = async function() {
             try {
