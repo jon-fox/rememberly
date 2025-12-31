@@ -77,17 +77,16 @@ async function loadAuthorizationRequest() {
                     approvalInProgress = false;
                     console.error('[CONSENT] Auto-approve failed:', err);
                     
-                    // Check if it's because authorization was already used/expired
-                    const errorMsg = err.message?.toLowerCase() || '';
-                    const errorCode = err.code?.toLowerCase() || '';
-                    
-                    if (errorMsg.includes('not found') || errorCode.includes('not_found') || errorCode.includes('authorization_not_found')) {
+                    // Check if this is an authorization not found error
+                    if (err && (err.code === 'oauth_authorization_not_found' || 
+                                (err.message && err.message.toLowerCase().includes('not found')))) {
                         showError('This authorization request has expired or already been used. Please try connecting again.');
-                    } else {
-                        // For other errors, show manual consent as fallback
-                        console.log('[CONSENT] Showing manual consent as fallback');
-                        showConsentScreen(session.user.email);
+                        return;
                     }
+                    
+                    // For other errors, show manual consent as fallback
+                    console.log('[CONSENT] Showing manual consent as fallback');
+                    showConsentScreen(session.user.email);
                 }
             } else {
                 // Third-party app - show consent screen
