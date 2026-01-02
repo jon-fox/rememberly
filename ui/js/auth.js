@@ -1,78 +1,80 @@
-// Supabase Authentication Module
-// Initialize Supabase client with your project credentials
+// Cloudflare Workers Authentication Module
+// Replaces Supabase with custom JWT-based auth
 
-// Create Supabase client
-let supabaseClient = null;
-let supabaseInitialized = false;
+// Auth client state
+let authClient = null;
+let authInitialized = false;
 
 // Get configuration
-function getSupabaseConfig() {
+function getAuthConfig() {
     // Try to get from config.js if available
-    if (typeof CONFIG !== 'undefined' && CONFIG.supabase) {
-        console.log('Using CONFIG from config.js:', CONFIG.supabase.url);
-        console.log('Has key:', !!CONFIG.supabase.anonKey);
-        return CONFIG.supabase;
+    if (typeof CONFIG !== 'undefined' && CONFIG.api) {
+        console.log('Using CONFIG from config.js:', CONFIG.api.baseUrl);
+        return CONFIG.api;
     }
     
-    // Fallback to direct configuration - should not be reached if config.js is loaded
+    // Fallback to direct configuration
     console.warn('CONFIG not found, using fallback configuration');
     const config = {
-        url: 'https://ijyyifghxitisjbfnoxb.supabase.co',
-        anonKey: localStorage.getItem('supabase_anon_key') || ''
+        baseUrl: 'https://mcp.rememberly.xyz',
+        apiUrl: 'https://mcp.rememberly.xyz/api'
     };
     
     return config;
 }
 
-// Initialize Supabase client
-function initSupabase() {
-    if (supabaseInitialized) {
-        return supabaseClient;
+// Initialize auth client
+function initAuth() {
+    if (authInitialized) {
+        return authClient;
     }
     
-    if (typeof supabase === 'undefined') {
-        console.error('Supabase library not loaded. Please include the Supabase CDN script.');
-        return null;
-    }
+    const config = getAuthConfig();
     
-    const config = getSupabaseConfig();
+    authClient = {
+        baseUrl: config.baseUrl,
+        apiUrl: config.apiUrl,
+        storageKey: 'rememberly-auth-token'
+    };
     
-    // Validate configuration
-    if (!config.anonKey) {
-        console.error('Supabase anon key not configured!');
-        console.log('To configure, run in console: setAnonKey("your-actual-key")');
-        return null;
-    }
-    
-    supabaseClient = supabase.createClient(config.url, config.anonKey, {
-        auth: {
-            autoRefreshToken: true,
-            persistSession: true,
-            detectSessionInUrl: true,
-            storage: window.localStorage,
-            storageKey: 'rememberly-auth-token'
-        }
-    });
-    supabaseInitialized = true;
-    console.log('Supabase client initialized with persistent session storage');
-    return supabaseClient;
+    authInitialized = true;
+    console.log('Auth client initialized');
+    return authClient;
 }
 
 // Get current user session
 async function getCurrentSession() {
-    if (!supabaseClient) {
-        console.error('Supabase client not initialized');
+    if (!authClient) {
+        console.error('Auth client not initialized');
         return null;
     }
     
-    const { data: { session }, error } = await supabaseClient.auth.getSession();
-    
-    if (error) {
-        console.error('Error getting session:', error.message);
+    const token = localStorage.getItem(authClient.storageKey);
+    if (!token) {
         return null;
     }
     
-    return session;
+    try {
+        // Verify token with backend
+        const response = await fetch(`${authClient.apiUrl}/auth/verify`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            localStorage.removeItem(authClient.storageKey);
+            return null;
+        }
+        
+        const data = await response.json();
+        return { user: data.user, token };
+    } catch (error) {
+        console.error('Error verifying session:', error.message);
+        return null;
+    }
 }
 
 // Get current user
@@ -83,20 +85,30 @@ async function getCurrentUser() {
 
 // Sign up with email and password
 async function signUp(email, password, userData = {}) {
-    if (!supabaseClient) {
-        throw new Error('Supabase client not initialized');
+    if (!authClient) {
+        throw new Error('Auth client not initialized');
     }
     
-    const { data, error } = await supabaseClient.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-            data: userData
-        }
+    const response = await fetch(`${authClient.apiUrl}/auth/signup`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email,
+            password,
+            userData
+        })
     });
     
-    if (error) {
-        throw error;
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Signup failed');
+    }
+    
+    const data = await response.json();
+    if (data.token) {
+        localStorage.setItem(authClient.storageKey, data.token);
     }
     
     return data;
@@ -104,17 +116,29 @@ async function signUp(email, password, userData = {}) {
 
 // Sign in with email and password
 async function signIn(email, password) {
-    if (!supabaseClient) {
-        throw new Error('Supabase client not initialized');
+    if (!authClient) {
+        throw new Error('Auth client not initialized');
     }
     
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
+    const response = await fetch(`${authClient.apiUrl}/auth/signin`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email,
+            password
+        })
     });
     
-    if (error) {
-        throw error;
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Signin failed');
+    }
+    
+    const data = await response.json();
+    if (data.token) {
+        localStorage.setItem(authClient.storageKey, data.token);
     }
     
     return data;
@@ -122,30 +146,45 @@ async function signIn(email, password) {
 
 // Sign out
 async function signOut() {
-    if (!supabaseClient) {
-        throw new Error('Supabase client not initialized');
+    if (!authClient) {
+        throw new Error('Auth client not initialized');
     }
     
-    const { error } = await supabaseClient.auth.signOut();
+    localStorage.removeItem(authClient.storageKey);
     
-    if (error) {
-        throw error;
+    // Optional: notify backend
+    const token = localStorage.getItem(authClient.storageKey);
+    if (token) {
+        try {
+            await fetch(`${authClient.apiUrl}/auth/signout`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        } catch (error) {
+            console.error('Error signing out from backend:', error);
+        }
     }
 }
 
-// Listen to auth state changes
+// Listen to auth state changes (simplified for custom auth)
 function onAuthStateChange(callback) {
-    if (!supabaseClient) {
-        console.error('Supabase client not initialized');
+    if (!authClient) {
+        console.error('Auth client not initialized');
         return null;
     }
     
-    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event, session) => {
-        console.log('Auth event:', event);
-        callback(event, session);
-    });
+    // Check for session changes periodically
+    const interval = setInterval(async () => {
+        const session = await getCurrentSession();
+        callback(session ? 'SIGNED_IN' : 'SIGNED_OUT', session);
+    }, 5000); // Check every 5 seconds
     
-    return subscription;
+    return {
+        unsubscribe: () => clearInterval(interval)
+    };
+}
 }
 
 // Update user metadata
