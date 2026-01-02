@@ -25,6 +25,7 @@ interface MCPResponse {
 
 /**
  * Handle MCP protocol requests
+ * Proxies entire JSON-RPC request to AWS Lambda MCP server
  */
 export async function handleMCP(c: Context): Promise<Response> {
 	// Verify OAuth token
@@ -54,144 +55,24 @@ export async function handleMCP(c: Context): Promise<Response> {
 		}, 401);
 	}
 
-	// Parse MCP request
-	const request = await c.req.json<MCPRequest>();
+	// Parse MCP request body
+	const body = await c.req.text();
 
-	// Handle different MCP methods
-	switch (request.method) {
-		case 'initialize':
-			return handleInitialize(c, request, claims);
-		
-		case 'tools/list':
-			return handleToolsList(c, request, claims);
-		
-		case 'tools/call':
-			return handleToolsCall(c, request, claims);
-		
-		case 'resources/list':
-			return handleResourcesList(c, request, claims);
-		
-		case 'resources/read':
-			return handleResourcesRead(c, request, claims);
-		
-		case 'prompts/list':
-			return handlePromptsList(c, request, claims);
-		
-		default:
-			return c.json({
-				jsonrpc: '2.0',
-				id: request.id,
-				error: {
-					code: -32601,
-					message: `Method not found: ${request.method}`
-				}
-			});
-	}
-}
-
-async function handleInitialize(c: Context, request: MCPRequest, claims: AuthClaims): Promise<Response> {
-	return c.json({
-		jsonrpc: '2.0',
-		id: request.id,
-		result: {
-			protocolVersion: '2024-11-05',
-			capabilities: {
-				tools: {},
-				resources: {},
-				prompts: {}
-			},
-			serverInfo: {
-				name: 'rememberly-mcp',
-				version: '0.1.0'
-			}
-		}
-	});
-}
-
-async function handleToolsList(c: Context, request: MCPRequest, claims: AuthClaims): Promise<Response> {
-	// Forward to AWS API to get user's available tools
-	const awsResponse = await fetch(`${c.env.AWS_API_ENDPOINT}/mcp/tools`, {
-		headers: {
-			'X-User-Id': claims.sub
-		}
-	});
-
-	const tools = await awsResponse.json();
-
-	return c.json({
-		jsonrpc: '2.0',
-		id: request.id,
-		result: { tools }
-	});
-}
-
-async function handleToolsCall(c: Context, request: MCPRequest, claims: AuthClaims): Promise<Response> {
-	// Forward tool execution to AWS API
-	const awsResponse = await fetch(`${c.env.AWS_API_ENDPOINT}/mcp/tools/call`, {
+	// Forward entire JSON-RPC request to AWS Lambda with user ID in header
+	const awsResponse = await fetch(c.env.AWS_API_ENDPOINT, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 			'X-User-Id': claims.sub
 		},
-		body: JSON.stringify(request.params)
+		body: body
 	});
 
-	const result = await awsResponse.json();
-
-	return c.json({
-		jsonrpc: '2.0',
-		id: request.id,
-		result
-	});
-}
-
-async function handleResourcesList(c: Context, request: MCPRequest, claims: AuthClaims): Promise<Response> {
-	const awsResponse = await fetch(`${c.env.AWS_API_ENDPOINT}/mcp/resources`, {
+	// Return AWS response directly
+	return new Response(awsResponse.body, {
+		status: awsResponse.status,
 		headers: {
-			'X-User-Id': claims.sub
+			'Content-Type': 'application/json'
 		}
-	});
-
-	const resources = await awsResponse.json();
-
-	return c.json({
-		jsonrpc: '2.0',
-		id: request.id,
-		result: { resources }
-	});
-}
-
-async function handleResourcesRead(c: Context, request: MCPRequest, claims: AuthClaims): Promise<Response> {
-	const awsResponse = await fetch(`${c.env.AWS_API_ENDPOINT}/mcp/resources/read`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'X-User-Id': claims.sub
-		},
-		body: JSON.stringify(request.params)
-	});
-
-	const result = await awsResponse.json();
-
-	return c.json({
-		jsonrpc: '2.0',
-		id: request.id,
-		result
-	});
-}
-
-async function handlePromptsList(c: Context, request: MCPRequest, claims: AuthClaims): Promise<Response> {
-	const awsResponse = await fetch(`${c.env.AWS_API_ENDPOINT}/mcp/prompts`, {
-		headers: {
-			'X-User-Id': claims.sub
-		}
-	});
-
-	const prompts = await awsResponse.json();
-
-	return c.json({
-		jsonrpc: '2.0',
-		id: request.id,
-		result: { prompts }
 	});
 }

@@ -17,7 +17,7 @@
 	"vars": {
 		"ENVIRONMENT": "production",
 		"MCP_BASE_URL": "https://mcp.rememberly.xyz",
-		"AWS_API_ENDPOINT": "https://api.rememberly.xyz",
+		"AWS_API_ENDPOINT": "https://api.rememberly.xyz/mcp",
 		"GOOGLE_CLIENT_ID": "768693547012-ut4v271sr36o19ohdkrejsm02dv2hbi4.apps.googleusercontent.com",
 		"GOOGLE_CLIENT_SECRET": "***REMOVED***"
 	},
