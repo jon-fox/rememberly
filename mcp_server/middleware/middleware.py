@@ -1,15 +1,13 @@
 """Authentication middleware for user lookup and validation.
 
 This middleware enriches the user context with data from DynamoDB.
-Users are validated based on X-User-Id header from Cloudflare Worker or Supabase token.
+Users are validated based on X-User-Id header from Cloudflare Worker.
 """
 
 import logging
 import json
 from typing import Any
 from fastmcp.server.middleware import Middleware, MiddlewareContext, CallNext
-from fastmcp.server.dependencies import get_access_token
-from starlette.requests import Request
 from cache import user_cache
 from db import users
 from models import UserContext
@@ -39,7 +37,7 @@ class AuthMiddleware(Middleware):
         user_data = None
         user_validated = False
 
-        # First, check for X-User-Id header from Cloudflare Worker
+        # Check for X-User-Id header from Cloudflare Worker
         try:
             if hasattr(context, 'request') and hasattr(context.request, 'headers'):
                 x_user_id = context.request.headers.get('X-User-Id')
@@ -60,33 +58,6 @@ class AuthMiddleware(Middleware):
                             logger.debug(f"Could not retrieve user data from DynamoDB: {str(e)}")
         except Exception as e:
             logger.debug(f"Could not extract X-User-Id header: {str(e)}")
-
-        # Fallback to Supabase token if no Cloudflare header
-        if not user_id:
-            try:
-                access_token = get_access_token()
-                logger.info(f"get_access_token() returned: {access_token is not None}")
-                if access_token and access_token.claims:
-                    user_id = access_token.claims.get("sub")
-                    email = access_token.claims.get("email")
-                    user_validated = email is not None
-                    logger.info(
-                        f"Token claims extracted: user_id={user_id}, email={email}, validated={user_validated}"
-                    )
-
-                    if user_id:
-                        user_data = user_cache.get(user_id)
-                        if user_data is None:
-                            try:
-                                user_data = users.get_user(user_id)
-                                if user_data:
-                                    user_cache.set(user_id, user_data)
-                            except Exception as e:
-                                logger.debug(
-                                    f"Could not retrieve user data from DynamoDB: {str(e)}"
-                                )
-            except Exception as e:
-                logger.warning(f"Auth context retrieval failed: {str(e)}")
 
         logger.info(
             f"Final user_context: authenticated={user_validated}, user_id={user_id}"

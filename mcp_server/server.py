@@ -6,7 +6,6 @@ from typing import List
 from fastmcp import FastMCP
 from starlette.middleware.cors import CORSMiddleware
 
-from auth import get_supabase_auth
 from interfaces.resource import Resource
 from interfaces.tool import Tool
 from middleware import AuthMiddleware
@@ -88,7 +87,6 @@ def create_mcp_server() -> FastMCP:
 
     mcp = FastMCP(
         "Rememberly",
-        auth=get_supabase_auth(),
         instructions=MCP_INSTRUCTIONS,
     )
     
@@ -113,30 +111,13 @@ def create_mcp_server() -> FastMCP:
 
 
 def create_http_app():
-    """Create a FastMCP HTTP app with CORS and Auth middleware."""
-    from starlette.applications import Starlette
-    from starlette.routing import Mount
-
+    """Create a FastMCP HTTP app with CORS middleware."""
     mcp_server = create_mcp_server()
-    auth = get_supabase_auth()
-
-    # Get well-known OAuth discovery routes
-    well_known_routes = auth.get_well_known_routes(mcp_path="/mcp")
 
     # Create MCP app
-    mcp_app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
+    app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
 
-    # Mount everything in a Starlette app with well-known routes at root
-    app = Starlette(
-        routes=[
-            *well_known_routes,
-            Mount("/", app=mcp_app),
-        ],
-        lifespan=mcp_app.lifespan,
-    )
-
-    # Only add CORS middleware at the Starlette level
-    # Auth middleware is added directly to the MCP server
+    # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],

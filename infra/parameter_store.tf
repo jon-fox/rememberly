@@ -149,33 +149,6 @@ resource "aws_ssm_parameter" "mcp_lambda_function_arn" {
   }
 }
 
-# Supabase Parameters
-resource "aws_ssm_parameter" "supabase_url" {
-  name        = "/application/supabase/url"
-  description = "Supabase project URL"
-  type        = "String"
-  value       = local.supabase_url
-
-  tags = {
-    Environment = var.environment
-    Project     = "rememberly"
-    Purpose     = "database"
-  }
-}
-
-resource "aws_ssm_parameter" "supabase_project_id" {
-  name        = "/application/supabase/project_id"
-  description = "Supabase project ID"
-  type        = "String"
-  value       = local.supabase_project_id
-
-  tags = {
-    Environment = var.environment
-    Project     = "rememberly"
-    Purpose     = "database"
-  }
-}
-
 # ACM Certificate Parameters
 resource "aws_ssm_parameter" "cloudfront_certificate_arn" {
   name        = "/application/acm_certificate/cloudfront_arn"

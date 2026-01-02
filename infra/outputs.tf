@@ -53,24 +53,13 @@ output "route53_name_servers" {
 
 # MCP API outputs
 output "mcp_endpoint" {
-  description = "MCP API endpoint URL"
-  value       = "https://${local.mcp_domain}/mcp"
+  description = "MCP API endpoint URL (now proxied via Cloudflare)"
+  value       = "https://${local.mcp_domain}"
 }
 
 output "mcp_lambda_function_name" {
   description = "Name of the MCP Lambda function"
   value       = aws_lambda_function.mcp_server.function_name
-}
-
-# Supabase outputs
-output "supabase_url" {
-  description = "Supabase project URL"
-  value       = local.supabase_url
-}
-
-output "supabase_project_id" {
-  description = "Supabase project ID"
-  value       = local.supabase_project_id
 }
 
 # ACM Certificate outputs
