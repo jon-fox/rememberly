@@ -147,29 +147,3 @@ resource "aws_acm_certificate_validation" "mcp" {
   certificate_arn         = aws_acm_certificate.mcp.arn
   validation_record_fqdns = [for record in aws_route53_record.mcp_cert_validation : record.fqdn]
 }
-
-# Route53 A record for MCP subdomain
-resource "aws_route53_record" "mcp" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = local.mcp_domain
-  type    = "A"
-
-  alias {
-    name                   = aws_apigatewayv2_domain_name.mcp.domain_name_configuration[0].target_domain_name
-    zone_id                = aws_apigatewayv2_domain_name.mcp.domain_name_configuration[0].hosted_zone_id
-    evaluate_target_health = false
-  }
-}
-
-# Route53 AAAA record for MCP subdomain (IPv6)
-resource "aws_route53_record" "mcp_ipv6" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = local.mcp_domain
-  type    = "AAAA"
-
-  alias {
-    name                   = aws_apigatewayv2_domain_name.mcp.domain_name_configuration[0].target_domain_name
-    zone_id                = aws_apigatewayv2_domain_name.mcp.domain_name_configuration[0].hosted_zone_id
-    evaluate_target_health = false
-  }
-}
