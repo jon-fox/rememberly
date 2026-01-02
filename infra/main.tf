@@ -37,6 +37,7 @@ locals {
   domain_name         = "rememberly.xyz"
   www_domain          = "www.rememberly.xyz"
   mcp_domain          = "mcp.rememberly.xyz"
+  api_domain          = "api.rememberly.xyz"
   s3_origin_id        = "S3-${local.domain_name}"
   website_bucket_name = "rememberly-website-${random_uuid.website_bucket.result}"
   storage_bucket_name = "rememberly-storage-${random_uuid.storage_bucket.result}"

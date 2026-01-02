@@ -106,7 +106,9 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
   }
 }
 
-# Custom domain for MCP API Gateway
+# Custom domain for old MCP API Gateway (kept for compatibility during transition)
+# Note: mcp.rememberly.xyz now points to Cloudflare Worker via CNAME
+# This domain mapping is only used if accessing API Gateway directly
 resource "aws_apigatewayv2_domain_name" "mcp" {
   domain_name = local.mcp_domain
 

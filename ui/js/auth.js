@@ -259,7 +259,7 @@ async function ensureUserInDatabase(user, accessToken, username = null) {
     }
     
     try {
-        const apiEndpoint = 'https://mcp.rememberly.xyz/users';
+        const apiEndpoint = 'https://api.rememberly.xyz/users';
         const payload = {
             user_id: user.id,
             email: user.email,

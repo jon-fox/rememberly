@@ -53,8 +53,13 @@ output "route53_name_servers" {
 
 # MCP API outputs
 output "mcp_endpoint" {
-  description = "MCP API endpoint URL (now proxied via Cloudflare)"
+  description = "MCP API endpoint URL (user-facing via Cloudflare Worker)"
   value       = "https://${local.mcp_domain}"
+}
+
+output "api_endpoint" {
+  description = "Internal API endpoint URL (AWS Gateway for backend)"
+  value       = "https://${local.api_domain}"
 }
 
 output "mcp_lambda_function_name" {

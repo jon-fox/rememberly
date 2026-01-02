@@ -97,7 +97,7 @@ export async function handleGoogleCallback(c: Context) {
 
 	const userInfo: GoogleUserInfo = await userInfoResponse.json();
 
-	// Create or update user in our database
+	// Create or update user in Cloudflare D1
 	const db = new AuthDatabase(c.env.DB);
 	let user = await db.getUserByEmail(userInfo.email);
 
@@ -109,6 +109,34 @@ export async function handleGoogleCallback(c: Context) {
 	// Generate session token
 	const accessToken = generateSessionToken();
 	await storeSession(accessToken, user.id, user.email, c.env.USER_CACHE);
+
+	// Create/update user in AWS backend (DynamoDB + S3)
+	// Match the format used by ui/js/auth.js
+	try {
+		const userServiceUrl = c.env.AWS_API_ENDPOINT.replace('/mcp', '/users');
+		const response = await fetch(userServiceUrl, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${accessToken}`
+			},
+			body: JSON.stringify({
+				user_id: user.id,
+				email: userInfo.email,
+				username: userInfo.name || userInfo.email.split('@')[0]
+			})
+		});
+
+		if (response.ok) {
+			console.log('User created/updated in AWS backend successfully');
+		} else {
+			console.warn('Failed to create user in AWS backend:', response.status);
+			// Don't fail the auth flow - user still exists in Cloudflare D1
+		}
+	} catch (error) {
+		console.error('Error creating user in AWS backend:', error);
+		// Don't fail the auth flow - user still exists in Cloudflare D1
+	}
 
 	// If this is part of MCP OAuth flow, redirect to consent page
 	if (stateData.mcp_client_id) {

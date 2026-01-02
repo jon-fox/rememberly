@@ -106,10 +106,11 @@ resource "aws_route53_record" "www_ipv6" {
   }
 }
 
-# ACM Certificate for MCP API Gateway (must be in us-east-1 for edge-optimized endpoints)
+# ACM Certificate for API Gateway (covers both mcp and api subdomains)
 resource "aws_acm_certificate" "mcp" {
   provider          = aws.us_east_1
   domain_name       = local.mcp_domain
+  subject_alternative_names = [local.api_domain]
   validation_method = "DNS"
 
   lifecycle {
@@ -117,7 +118,7 @@ resource "aws_acm_certificate" "mcp" {
   }
 
   tags = {
-    Name        = local.mcp_domain
+    Name        = "api-gateway-cert"
     Environment = var.environment
     Project     = "rememberly"
   }

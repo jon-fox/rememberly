@@ -87,7 +87,6 @@ resource "aws_lambda_function" "mcp_server" {
     variables = {
       STORAGE_BUCKET    = aws_s3_bucket.storage.id
       DYNAMODB_TABLE    = aws_dynamodb_table.metadata.name
-      SUPABASE_URL      = local.supabase_url
       ENVIRONMENT       = var.environment
       IMAGE_VERSION     = var.mcp_image_version
     }

@@ -114,7 +114,7 @@ resource "aws_ssm_parameter" "mcp_endpoint" {
   name        = "/application/mcp_api/endpoint"
   description = "MCP API endpoint URL"
   type        = "String"
-  value       = "https://${local.mcp_domain}/mcp"
+  value       = "https://${local.mcp_domain}"
 
   tags = {
     Environment = var.environment
