@@ -35,5 +35,11 @@
 			"database_id": "bf0d2ab7-94bf-4893-973e-e5e8257ed72c",
 			"remote": true
 		}
+	],
+	"routes": [
+		{
+			"pattern": "mcp.rememberly.xyz/*",
+			"custom_domain": true
+		}
 	]
 }

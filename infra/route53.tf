@@ -1,5 +1,8 @@
 # Route53 DNS Configuration for rememberly.xyz
+# DEPRECATED: DNS now managed by Cloudflare
+# Keep commented for rollback capability
 
+/*
 # Route53 Hosted Zone
 resource "aws_route53_zone" "main" {
   name = local.domain_name
@@ -10,8 +13,10 @@ resource "aws_route53_zone" "main" {
     Project     = "rememberly"
   }
 }
+*/
 
 # ACM Certificate for CloudFront (must be in us-east-1)
+# Still needed for CloudFront, but validation will be done in Cloudflare
 resource "aws_acm_certificate" "main" {
   provider          = aws.us_east_1
   domain_name       = local.domain_name
@@ -29,6 +34,7 @@ resource "aws_acm_certificate" "main" {
   }
 }
 
+/*
 # DNS validation records for ACM certificate
 resource "aws_route53_record" "cert_validation" {
   for_each = {
@@ -147,4 +153,23 @@ resource "aws_acm_certificate_validation" "mcp" {
   provider                = aws.us_east_1
   certificate_arn         = aws_acm_certificate.mcp.arn
   validation_record_fqdns = [for record in aws_route53_record.mcp_cert_validation : record.fqdn]
+}
+*/
+
+# ACM Certificate for API Gateway (covers api subdomain)
+# Cloudflare will handle mcp.rememberly.xyz SSL
+resource "aws_acm_certificate" "mcp" {
+  provider          = aws.us_east_1
+  domain_name       = local.api_domain
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name        = "api-gateway-cert"
+    Environment = var.environment
+    Project     = "rememberly"
+  }
 }

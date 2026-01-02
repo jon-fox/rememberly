@@ -82,7 +82,9 @@ resource "aws_ssm_parameter" "cloudfront_domain_name" {
   }
 }
 
-# Route53 Parameters
+# Route53 Parameters - DEPRECATED: DNS now in Cloudflare
+# Commented out - zone no longer exists
+/*
 resource "aws_ssm_parameter" "route53_zone_id" {
   name        = "/application/route53/zone_id"
   description = "ID of the Route53 hosted zone"
@@ -108,6 +110,7 @@ resource "aws_ssm_parameter" "route53_name_servers" {
     Purpose     = "dns"
   }
 }
+*/
 
 # MCP API Parameters
 resource "aws_ssm_parameter" "mcp_endpoint" {
