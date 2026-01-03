@@ -59,20 +59,47 @@ export async function handleMCP(c: Context): Promise<Response> {
 	const body = await c.req.text();
 
 	// Forward entire JSON-RPC request to AWS Lambda with user ID in header
+	// Include all MCP-required headers from the original request
+	const forwardHeaders: Record<string, string> = {
+		'Content-Type': c.req.header('Content-Type') || 'application/json',
+		'X-User-Id': claims.sub
+	};
+	
+	// Forward MCP protocol headers (required by MCP spec)
+	const acceptHeader = c.req.header('Accept');
+	if (acceptHeader) {
+		forwardHeaders['Accept'] = acceptHeader;
+	}
+	
+	const protocolVersion = c.req.header('MCP-Protocol-Version');
+	if (protocolVersion) {
+		forwardHeaders['MCP-Protocol-Version'] = protocolVersion;
+	}
+	
+	const sessionId = c.req.header('MCP-Session-Id');
+	if (sessionId) {
+		forwardHeaders['MCP-Session-Id'] = sessionId;
+	}
+
 	const awsResponse = await fetch(c.env.AWS_API_ENDPOINT, {
 		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'X-User-Id': claims.sub
-		},
+		headers: forwardHeaders,
 		body: body
 	});
 
-	// Return AWS response directly
+	// Return AWS response directly, preserving all important headers
+	const responseHeaders = new Headers();
+	const contentType = awsResponse.headers.get('Content-Type');
+	if (contentType) {
+		responseHeaders.set('Content-Type', contentType);
+	}
+	
+	// Forward CORS headers
+	responseHeaders.set('Access-Control-Allow-Origin', '*');
+	responseHeaders.set('Access-Control-Allow-Credentials', 'true');
+
 	return new Response(awsResponse.body, {
 		status: awsResponse.status,
-		headers: {
-			'Content-Type': 'application/json'
-		}
+		headers: responseHeaders
 	});
 }

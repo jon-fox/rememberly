@@ -102,13 +102,33 @@ export async function handleConsent(c: Context) {
 }
 
 /**
- * Step 3: Token endpoint
+ * Step 3: Token endpoint  
  * MCP client exchanges auth code for access token
+ * OAuth 2.1 spec requires application/x-www-form-urlencoded
  */
 export async function handleToken(c: Context) {
-	const body = await c.req.json<TokenRequest>();
+	try {
+		const contentType = c.req.header('Content-Type') || '';
+		let body: TokenRequest;
+		
+		// OAuth 2.1 requires form-urlencoded, but support both
+		if (contentType.includes('application/x-www-form-urlencoded')) {
+			const formData = await c.req.parseBody();
+			body = {
+				grant_type: formData.grant_type as any,
+				code: formData.code as string,
+				refresh_token: formData.refresh_token as string,
+				redirect_uri: formData.redirect_uri as string,
+				code_verifier: formData.code_verifier as string,
+				client_id: formData.client_id as string,
+			};
+		} else {
+			// Fallback to JSON
+			const rawBody = await c.req.text();
+			body = JSON.parse(rawBody) as TokenRequest;
+		}
 
-	if (body.grant_type === 'authorization_code') {
+		if (body.grant_type === 'authorization_code') {
 		if (!body.code || !body.code_verifier || !body.redirect_uri) {
 			return c.json({ error: 'invalid_request' }, 400);
 		}
@@ -188,6 +208,10 @@ export async function handleToken(c: Context) {
 	}
 
 	return c.json({ error: 'unsupported_grant_type' }, 400);
+	} catch (error) {
+		console.error('[TOKEN] Error:', error);
+		return c.json({ error: 'server_error', error_description: String(error) }, 500);
+	}
 }
 
 /**
