@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authorize Application - Rememberly</title>
+    <title>Authorizing - Rememberly</title>
     <link rel="icon" type="image/png" href="/images/favicon.png">
     <link rel="stylesheet" href="/styles.css">
 </head>
@@ -16,123 +16,15 @@
                 <p class="tagline">Your AI-powered memory companion</p>
             </header>
 
-            <!-- Loading State -->
             <div id="loading" style="text-align: center; padding: 40px;">
-                <p>Verifying authorization...</p>
+                <p>Completing authorization...</p>
+                <p style="color: #666; font-size: 14px; margin-top: 10px;">You'll be redirected shortly</p>
             </div>
 
-            <!-- Unauthenticated State: Show Sign In/Sign Up -->
-            <div id="auth-section" style="display: none;">
-                <div class="consent-header" style="text-align: center; margin-bottom: 30px;">
-                    <h2 style="font-size: 20px; margin-bottom: 10px;">Authorize Application</h2>
-                    <p style="color: #666;"><strong id="client-name">An application</strong> wants to access your Rememberly account</p>
-                </div>
-
-                <div class="consent-info" style="margin: 20px 0; padding: 15px; background: transparent; border-radius: 8px;">
-                    <h3 style="margin-top: 0; font-size: 14px; color: #666;">This application will be able to:</h3>
-                    <ul style="list-style: none; padding: 0; margin: 10px 0; font-size: 14px;">
-                        <li style="padding: 5px 0;">Access your stored memories and context</li>
-                        <li style="padding: 5px 0;">Create and manage memory buckets</li>
-                        <li style="padding: 5px 0;">Store new memories on your behalf</li>
-                        <li style="padding: 5px 0;">View your account metrics</li>
-                    </ul>
-                </div>
-
-                <p style="text-align: center; margin: 20px 0; font-size: 16px; font-weight: 500;">Sign in to continue</p>
-
-                <!-- Email/Password Sign In Form -->
-                <div class="auth-form active">
-                    <form id="loginForm">
-                        <div class="form-group">
-                            <label for="loginEmail">Email</label>
-                            <input 
-                                type="email" 
-                                id="loginEmail" 
-                                name="email" 
-                                placeholder="you@example.com"
-                                required
-                                autocomplete="email"
-                            >
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="loginPassword">Password</label>
-                            <input 
-                                type="password" 
-                                id="loginPassword" 
-                                name="password" 
-                                placeholder="••••••••"
-                                required
-                                autocomplete="current-password"
-                            >
-                        </div>
-                        
-                        <button type="submit" class="auth-button">Sign In</button>
-                        
-                        <div id="loginError" class="error-message"></div>
-                    </form>
-                </div>
-
-                <!-- OAuth Options -->
-                <div class="oauth-section">
-                    <div class="divider">
-                        <span>Or continue with</span>
-                    </div>
-                    
-                    <div class="oauth-buttons">
-                        <button class="oauth-button google" id="googleSignIn">
-                            <svg width="18" height="18" viewBox="0 0 18 18">
-                                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
-                                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-                                <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707 0-.593.102-1.17.282-1.709V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.335z"/>
-                                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-                            </svg>
-                            Google
-                        </button>
-                        
-                        <button class="oauth-button github" id="githubSignIn">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                            </svg>
-                            GitHub
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Authenticated State: Show Consent Approval -->
-            <div id="consent-section" style="display: none;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <h2 style="font-size: 20px; margin-bottom: 10px;">Authorize Application</h2>
-                    <p style="color: #666;"><strong id="consent-client-name">An application</strong> wants to access your Rememberly account</p>
-                </div>
-
-                <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: transparent; border-radius: 8px; font-size: 14px; color: #666;">
-                    Authorizing as: <strong id="user-email" style="color: #333;"></strong>
-                </div>
-
-                <div style="margin: 20px 0; padding: 15px; background: transparent; border-radius: 8px;">
-                    <h3 style="margin-top: 0; font-size: 14px; color: #666;">This application will be able to:</h3>
-                    <ul style="list-style: none; padding: 0; margin: 10px 0; font-size: 14px;">
-                        <li style="padding: 5px 0;">Access your stored memories and context</li>
-                        <li style="padding: 5px 0;">Create and manage memory buckets</li>
-                        <li style="padding: 5px 0;">Store new memories on your behalf</li>
-                        <li style="padding: 5px 0;">View your account metrics</li>
-                    </ul>
-                </div>
-
-                <div id="error-message" class="error-message" style="display: none;"></div>
-
-                <div style="display: flex; gap: 10px; margin-top: 30px;">
-                    <button class="auth-button" style="flex: 1; background: #6c757d;" onclick="handleDenyClick()">Deny</button>
-                    <button class="auth-button" style="flex: 1;" onclick="handleApproveClick()">Approve</button>
-                </div>
-            </div>
+            <div id="error-message" class="error-message" style="display: none; text-align: center; padding: 20px;"></div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/js/config.js"></script>
     <script src="/js/auth.js"></script>
     <script src="/js/consent.js"></script>
