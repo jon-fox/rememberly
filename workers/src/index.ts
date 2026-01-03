@@ -104,6 +104,35 @@ app.post('/api/auth/signout', async (c) => {
 	return c.json({ success: true });
 });
 
+// Get current user info from token
+app.get('/api/auth/user', async (c) => {
+	const authHeader = c.req.header('Authorization');
+	if (!authHeader?.startsWith('Bearer ')) {
+		return c.json({ error: 'Unauthorized' }, 401);
+	}
+	
+	const token = authHeader.replace('Bearer ', '');
+	const session = await c.env.USER_CACHE.get(token);
+	
+	if (!session) {
+		return c.json({ error: 'Invalid or expired token' }, 401);
+	}
+	
+	const sessionData = JSON.parse(session);
+	const db = new AuthDatabase(c.env.DB);
+	const user = await db.getUserById(sessionData.userId);
+	
+	if (!user) {
+		return c.json({ error: 'User not found' }, 404);
+	}
+	
+	return c.json({
+		id: user.id,
+		email: user.email,
+		created_at: user.created_at
+	});
+});
+
 // MCP OAuth endpoints (for MCP clients)
 import { handleAuthorize, handleConsent, handleToken, handleRegister } from './mcp-oauth';
 import { handleMCP } from './mcp-server';
