@@ -211,6 +211,7 @@ export async function handleRegister(c: Context) {
 	return c.json({
 		client_id: clientId,
 		client_secret: clientSecret,
-		client_name: body.client_name || 'MCP Client'
+		client_name: body.client_name || 'MCP Client',
+		redirect_uris: body.redirect_uris || []
 	});
 }

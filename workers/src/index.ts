@@ -119,6 +119,31 @@ app.get('/auth/github/callback', handleGitHubCallback);
 
 // MCP OAuth endpoints
 app.get('/authorize', handleAuthorize);
+app.get('/consent', async (c) => {
+	// Show consent page with query params
+	const params = c.req.query();
+	return c.html(`
+		<!DOCTYPE html>
+		<html>
+		<head><title>Grant Access</title></head>
+		<body style="font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px;">
+			<h1>Grant Access?</h1>
+			<p>An MCP client is requesting access to your data.</p>
+			<form method="POST" action="/consent">
+				<input type="hidden" name="token" value="${params.token}">
+				<input type="hidden" name="client_id" value="${params.client_id}">
+				<input type="hidden" name="redirect_uri" value="${params.redirect_uri}">
+				<input type="hidden" name="code_challenge" value="${params.code_challenge}">
+				<input type="hidden" name="state" value="${params.state || ''}">
+				<input type="hidden" name="approved" value="true">
+				<button type="submit" style="background: #0070f3; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-size: 16px;">
+					Allow Access
+				</button>
+			</form>
+		</body>
+		</html>
+	`);
+});
 app.post('/consent', handleConsent);
 app.post('/token', handleToken);
 app.post('/register', handleRegister);

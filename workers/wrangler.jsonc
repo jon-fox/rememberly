@@ -38,7 +38,7 @@
 	],
 	"routes": [
 		{
-			"pattern": "mcp.rememberly.xyz/*",
+			"pattern": "mcp.rememberly.xyz",
 			"custom_domain": true
 		}
 	]

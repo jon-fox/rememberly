@@ -24,13 +24,6 @@ class AuthMiddleware(Middleware):
         
         # Log the incoming request
         logger.info(f"Processing {context.method} from {context.source}")
-        
-        # Log the full request payload
-        try:
-            request_json = json.dumps(context.request, indent=2)
-            logger.info(f"Request payload: {request_json}")
-        except Exception as e:
-            logger.warning(f"Could not serialize request: {e}")
 
         user_id = None
         email = None
@@ -38,11 +31,14 @@ class AuthMiddleware(Middleware):
         user_validated = False
 
         # Check for X-User-Id header from Cloudflare Worker
+        # Access headers from ASGI scope
         try:
-            if hasattr(context, 'request') and hasattr(context.request, 'headers'):
-                x_user_id = context.request.headers.get('X-User-Id')
+            if hasattr(context, 'scope') and 'headers' in context.scope:
+                headers = dict(context.scope['headers'])
+                # Headers are bytes in ASGI
+                x_user_id = headers.get(b'x-user-id')
                 if x_user_id:
-                    user_id = x_user_id
+                    user_id = x_user_id.decode('utf-8')
                     user_validated = True
                     logger.info(f"User ID from Cloudflare header: {user_id}")
                     
@@ -57,7 +53,7 @@ class AuthMiddleware(Middleware):
                         except Exception as e:
                             logger.debug(f"Could not retrieve user data from DynamoDB: {str(e)}")
         except Exception as e:
-            logger.debug(f"Could not extract X-User-Id header: {str(e)}")
+            logger.error(f"Could not extract X-User-Id header: {str(e)}")
 
         logger.info(
             f"Final user_context: authenticated={user_validated}, user_id={user_id}"
