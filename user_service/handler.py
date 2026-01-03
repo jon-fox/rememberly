@@ -23,11 +23,63 @@ def get_table():
     return dynamodb.Table(table_name)
 
 
-def create_user(user_id: str, email: str, username: str = None) -> Dict[str, Any]:
-    """Create a new user in DynamoDB and initialize their default bucket in S3."""
+def create_or_update_user(user_id: str, email: str, username: str = None) -> Dict[str, Any]:
+    """Create a new user or update existing user if data has changed."""
     table = get_table()
     timestamp = datetime.utcnow().isoformat()
 
+    # Check if user already exists
+    try:
+        response = table.get_item(
+            Key={
+                "pk": f"USER#{user_id}",
+                "sk": "PROFILE"
+            }
+        )
+        
+        existing_user = response.get("Item")
+        
+        if existing_user:
+            # Check if any data has changed
+            needs_update = False
+            updates = {}
+            
+            if existing_user.get("email") != email:
+                updates["email"] = email
+                needs_update = True
+            
+            if username and existing_user.get("username") != username:
+                updates["username"] = username
+                needs_update = True
+            
+            if needs_update:
+                # Update only changed fields
+                updates["updated_at"] = timestamp
+                
+                update_expression = "SET " + ", ".join([f"#{k} = :{k}" for k in updates.keys()])
+                expression_attribute_names = {f"#{k}": k for k in updates.keys()}
+                expression_attribute_values = {f":{k}": v for k, v in updates.items()}
+                
+                table.update_item(
+                    Key={
+                        "pk": f"USER#{user_id}",
+                        "sk": "PROFILE"
+                    },
+                    UpdateExpression=update_expression,
+                    ExpressionAttributeNames=expression_attribute_names,
+                    ExpressionAttributeValues=expression_attribute_values
+                )
+                logger.info(f"Updated user in DynamoDB: {user_id}, changes: {list(updates.keys())}")
+            else:
+                logger.info(f"User {user_id} already exists with same data, skipping update")
+            
+            return existing_user
+    
+    except ClientError as e:
+        if e.response['Error']['Code'] != 'ResourceNotFoundException':
+            raise
+    
+    # User doesn't exist, create new user
     user_data = {
         "pk": f"USER#{user_id}",
         "sk": "PROFILE",
@@ -100,8 +152,8 @@ def lambda_handler(event, context):
                 "body": json.dumps({"error": "user_id and email are required"}),
             }
 
-        # Create user
-        user_data = create_user(user_id, email, username)
+        # Create or update user (only if data changed)
+        user_data = create_or_update_user(user_id, email, username)
 
         return {
             "statusCode": 201,
