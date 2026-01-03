@@ -16,7 +16,21 @@ async function loadAuthorizationRequest() {
         const codeChallenge = params.get('code_challenge');
         const state = params.get('state');
         
+        console.log('Consent page params:', {
+            userId,
+            clientId,
+            redirectUri,
+            codeChallenge,
+            state: state || '(empty)'
+        });
+        
         if (!userId || !clientId || !redirectUri || !codeChallenge) {
+            console.error('Missing required params:', {
+                userId: !!userId,
+                clientId: !!clientId,
+                redirectUri: !!redirectUri,
+                codeChallenge: !!codeChallenge
+            });
             showError('Invalid authorization request - missing parameters');
             return;
         }

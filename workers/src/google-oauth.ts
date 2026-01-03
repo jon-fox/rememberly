@@ -140,6 +140,8 @@ export async function handleGoogleCallback(c: Context) {
 
 	// If this is part of MCP OAuth flow, redirect to consent page
 	if (stateData.mcp_client_id) {
+		console.log('MCP OAuth state data:', JSON.stringify(stateData));
+		
 		const consentParams = new URLSearchParams({
 			user_id: user.id,
 			client_id: stateData.mcp_client_id,
@@ -147,8 +149,11 @@ export async function handleGoogleCallback(c: Context) {
 			code_challenge: stateData.mcp_code_challenge,
 			state: stateData.mcp_state || ''
 		});
+		
+		const consentUrl = `/consent?${consentParams.toString()}`;
+		console.log('Redirecting to consent page:', consentUrl);
 
-		return c.redirect(`/consent?${consentParams.toString()}`);
+		return c.redirect(consentUrl);
 	}
 
 	// Otherwise, this is a direct login - redirect to app with token
