@@ -185,7 +185,6 @@ function onAuthStateChange(callback) {
         unsubscribe: () => clearInterval(interval)
     };
 }
-}
 
 // Update user metadata
 async function updateUserMetadata(metadata) {

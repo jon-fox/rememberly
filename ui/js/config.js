@@ -1,6 +1,9 @@
 // Configuration Management
 // This file helps manage environment-specific configuration
 
+// API Base URL for backend services
+const API_BASE_URL = 'https://mcp.rememberly.xyz';
+
 // Configuration object
 const CONFIG = {
     // Supabase Configuration

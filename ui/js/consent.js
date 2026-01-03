@@ -18,9 +18,7 @@ async function loadAuthorizationRequest() {
     
     try {
         // Initialize Supabase (from auth.js)
-        if (!supabaseClient) {
-            initSupabase();
-        }
+        initSupabase();
         
         // Parse OAuth parameters from URL first
         const params = new URLSearchParams(window.location.search);
