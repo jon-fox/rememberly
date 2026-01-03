@@ -9,34 +9,17 @@ async function loadAuthorizationRequest() {
     try {
         const params = new URLSearchParams(window.location.search);
         
-        // Get the token that Google OAuth callback gave us
-        const token = params.get('token');
-        
-        // Get MCP OAuth parameters
+        // Get params from Google OAuth callback
+        const userId = params.get('user_id');
         const clientId = params.get('client_id');
         const redirectUri = params.get('redirect_uri');
         const codeChallenge = params.get('code_challenge');
         const state = params.get('state');
         
-        if (!token || !clientId || !redirectUri || !codeChallenge) {
+        if (!userId || !clientId || !redirectUri || !codeChallenge) {
             showError('Invalid authorization request - missing parameters');
             return;
         }
-        
-        // Get user info from token
-        const userResponse = await fetch(`${API_BASE_URL}/api/auth/user`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (!userResponse.ok) {
-            showError('Authentication failed - please try again');
-            return;
-        }
-        
-        const user = await userResponse.json();
-        
-        // Create user in DynamoDB if needed
-        await ensureUserInDatabase(user, token);
         
         // Auto-approve and get redirect URL
         approvalInProgress = true;
@@ -44,7 +27,7 @@ async function loadAuthorizationRequest() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                userId: user.id,
+                userId: userId,
                 clientId: clientId,
                 redirectUri: redirectUri,
                 codeChallenge: codeChallenge,

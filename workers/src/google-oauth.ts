@@ -141,7 +141,7 @@ export async function handleGoogleCallback(c: Context) {
 	// If this is part of MCP OAuth flow, redirect to consent page
 	if (stateData.mcp_client_id) {
 		const consentParams = new URLSearchParams({
-			token: accessToken,
+			user_id: user.id,
 			client_id: stateData.mcp_client_id,
 			redirect_uri: stateData.mcp_redirect_uri,
 			code_challenge: stateData.mcp_code_challenge,
