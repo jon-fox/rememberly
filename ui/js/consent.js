@@ -24,15 +24,18 @@ async function loadAuthorizationRequest() {
         console.log('[CONSENT] Full URL:', window.location.href);
         console.log('[CONSENT] All params:', Object.fromEntries(params.entries()));
         
-        const authorizationId = params.get('authorization_id');
+        // MCP OAuth2 flow parameters
+        const clientId = params.get('client_id');
         const clientName = params.get('client_name') || 'An application';
         const redirectUri = params.get('redirect_uri');
+        const codeChallenge = params.get('code_challenge');
         const state = params.get('state');
         const scope = params.get('scope');
         
         oauthParams = { 
-            authorization_id: authorizationId,
+            client_id: clientId,
             redirect_uri: redirectUri,
+            code_challenge: codeChallenge,
             state: state,
             scope: scope
         };
@@ -40,8 +43,8 @@ async function loadAuthorizationRequest() {
         console.log('[CONSENT] OAuth params:', oauthParams);
         console.log('[CONSENT] Client name:', clientName);
         
-        if (!authorizationId) {
-            console.error('[CONSENT] No authorization_id in URL');
+        if (!clientId || !redirectUri || !codeChallenge) {
+            console.error('[CONSENT] Missing required OAuth parameters');
             showError('Invalid authorization request');
             return;
         }
@@ -207,7 +210,7 @@ window.handleApproveClick = async function() {
     approvalInProgress = true;
     try {
         const session = await getCurrentSession();
-        await approveAuthorization(oauthParams.authorization_id, session);
+        await approveAuthorization(null, session);  // Pass null for authorizationId, params from URL
     } catch (err) {
         approvalInProgress = false;
         showError(err.message || 'Failed to approve authorization');
@@ -222,7 +225,7 @@ window.handleDenyClick = async function() {
     
     approvalInProgress = true;
     try {
-        await denyAuthorization(oauthParams.authorization_id);
+        await denyAuthorization(null);  // Pass null for authorizationId, params from URL
     } catch (err) {
         approvalInProgress = false;
         showError(err.message || 'Failed to deny authorization');

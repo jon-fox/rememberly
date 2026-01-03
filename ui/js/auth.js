@@ -453,15 +453,8 @@ async function denyAuthorization(authorizationId) {
     }
 }
 
-// Initialize immediately (don't wait for DOMContentLoaded)
-if (typeof supabase !== 'undefined') {
-    initSupabase();
-} else {
-    // If Supabase library isn't loaded yet, initialize when DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
-        initSupabase();
-    });
-}
+// Initialize Supabase when needed (called by pages that need it)
+// Don't auto-initialize to avoid errors on pages that don't load Supabase library
 
 // Export functions for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
