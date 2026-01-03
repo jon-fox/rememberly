@@ -72,10 +72,11 @@ export async function handleAuthorize(c: Context) {
  */
 export async function handleConsent(c: Context) {
 	const body = await c.req.json();
-	const { userId, clientId, redirectUri, codeChallenge, scopes, approved } = body;
+	const { userId, clientId, redirectUri, codeChallenge, scopes, approved, state } = body;
 
 	if (!approved) {
-		return c.redirect(`${redirectUri}?error=access_denied`);
+		const errorUrl = `${redirectUri}?error=access_denied${state ? '&state=' + state : ''}`;
+		return c.json({ redirect_url: errorUrl });
 	}
 
 	// Generate authorization code
@@ -91,13 +92,13 @@ export async function handleConsent(c: Context) {
 		expiresAt
 	});
 
-	// Redirect back to MCP client with code
+	// Return redirect URL for client to navigate to
 	const params = new URLSearchParams({
 		code,
-		...(body.state && { state: body.state })
+		...(state && { state })
 	});
 
-	return c.redirect(`${redirectUri}?${params.toString()}`);
+	return c.json({ redirect_url: `${redirectUri}?${params.toString()}` });
 }
 
 /**

@@ -292,7 +292,6 @@ async function autoApproveAuthorization(session, authorizationId, oauthParams) {
     try {
         console.log('[AUTH] Auto-approve started');
         console.log('[AUTH] Session user:', session.user.email);
-        console.log('[AUTH] authorization_id:', authorizationId);
         console.log('[AUTH] OAuth params:', oauthParams);
         
         const user = session.user;
@@ -304,22 +303,35 @@ async function autoApproveAuthorization(session, authorizationId, oauthParams) {
             console.log('[AUTH] User creation completed');
         }
         
-        // Approve the authorization using Supabase's OAuth API
-        // This returns the redirect_to URL that points to the client's callback
-        console.log('[AUTH] Calling approveAuthorization...');
-        const { data, error } = await supabaseClient.auth.oauth.approveAuthorization(authorizationId);
+        // Call our custom consent endpoint with OAuth parameters
+        console.log('[AUTH] Calling custom consent endpoint...');
+        const response = await fetch(`${API_BASE_URL}/consent`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userId: user.id,
+                clientId: oauthParams.client_id,
+                redirectUri: oauthParams.redirect_uri,
+                codeChallenge: oauthParams.code_challenge,
+                scopes: oauthParams.scope ? oauthParams.scope.split(' ') : [],
+                state: oauthParams.state,
+                approved: true
+            })
+        });
         
-        if (error) {
-            console.error('[AUTH] approveAuthorization error:', error);
-            throw error;
+        if (!response.ok) {
+            throw new Error('Failed to approve authorization');
         }
         
-        if (!data?.redirect_to) {
-            throw new Error('No redirect_to URL returned from approveAuthorization');
+        const data = await response.json();
+        if (!data.redirect_url) {
+            throw new Error('No redirect URL returned from consent endpoint');
         }
         
-        console.log('[AUTH] Redirecting to client callback:', data.redirect_to);
-        window.location.href = data.redirect_to;
+        console.log('[AUTH] Redirecting to client callback:', data.redirect_url);
+        window.location.href = data.redirect_url;
         return true;
         
     } catch (err) {
