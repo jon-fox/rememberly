@@ -7,6 +7,7 @@ data "cloudflare_zone" "main" {
 }
 
 # CloudFront DNS records
+# Using CNAME flattening - Cloudflare will resolve to IPs automatically
 resource "cloudflare_record" "apex" {
   zone_id = data.cloudflare_zone.main.id
   name    = "@"
