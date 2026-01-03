@@ -348,13 +348,43 @@ async function approveAuthorization(authorizationId, session) {
         
         console.log('[AUTH] Approving authorization...');
         
-        const { data, error } = await supabaseClient.auth.oauth.approveAuthorization(authorizationId);
+        // Get OAuth params from URL
+        const params = new URLSearchParams(window.location.search);
+        const clientId = params.get('client_id');
+        const redirectUri = params.get('redirect_uri');
+        const codeChallenge = params.get('code_challenge');
+        const state = params.get('state');
+        const scope = params.get('scope');
         
-        if (error) throw error;
+        // Call our custom consent endpoint
+        const response = await fetch(`${API_BASE_URL}/consent`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userId: user.id,
+                clientId: clientId,
+                redirectUri: redirectUri,
+                codeChallenge: codeChallenge,
+                scopes: scope ? scope.split(' ') : [],
+                state: state,
+                approved: true
+            })
+        });
         
-        console.log('[AUTH] Authorization approved successfully');
-        sessionStorage.removeItem('oauth_params');
+        if (!response.ok) {
+            throw new Error('Failed to approve authorization');
+        }
         
+        // The response should be a redirect, follow it
+        if (response.redirected) {
+            window.location.href = response.url;
+            return true;
+        }
+        
+        // If not redirected, try to get redirect URL from response
+        const data = await response.json();
         const redirectUrl = data.redirect_url || data.redirect_to;
         if (redirectUrl) {
             window.location.href = redirectUrl;
@@ -371,15 +401,49 @@ async function approveAuthorization(authorizationId, session) {
 // Deny OAuth authorization
 async function denyAuthorization(authorizationId) {
     try {
-        const { data, error } = await supabaseClient.auth.oauth.denyAuthorization(authorizationId);
+        // Get OAuth params from URL
+        const params = new URLSearchParams(window.location.search);
+        const clientId = params.get('client_id');
+        const redirectUri = params.get('redirect_uri');
+        const codeChallenge = params.get('code_challenge');
+        const state = params.get('state');
         
-        if (error) throw error;
+        const user = await getCurrentUser();
+        
+        // Call our custom consent endpoint with denied flag
+        const response = await fetch(`${API_BASE_URL}/consent`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userId: user?.id,
+                clientId: clientId,
+                redirectUri: redirectUri,
+                codeChallenge: codeChallenge,
+                state: state,
+                approved: false
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to deny authorization');
+        }
         
         console.log('[AUTH] Authorization denied');
         sessionStorage.removeItem('oauth_params');
         
-        if (data.redirect_url) {
-            window.location.href = data.redirect_url;
+        // The response should be a redirect, follow it
+        if (response.redirected) {
+            window.location.href = response.url;
+            return true;
+        }
+        
+        // If not redirected, try to get redirect URL from response
+        const data = await response.json();
+        const redirectUrl = data.redirect_url || data.redirect_to;
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
             return true;
         } else {
             throw new Error('No redirect URL provided');
