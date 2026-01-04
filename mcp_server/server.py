@@ -6,7 +6,9 @@ from typing import List
 
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.google import GoogleProvider
+from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Mount
 
 from interfaces.resource import Resource
 from interfaces.tool import Tool
@@ -122,11 +124,24 @@ def create_mcp_server() -> FastMCP:
 
 
 def create_http_app():
-    """Create a FastMCP HTTP app with CORS middleware."""
+    """Create a FastMCP HTTP app with OAuth routes and CORS middleware."""
     mcp_server = create_mcp_server()
+    auth_provider = mcp_server.auth
 
-    # Create MCP app
-    app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
+    # Create MCP app (stateless for Lambda)
+    mcp_app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
+
+    # Get ALL OAuth routes (includes /register, /authorize, /token, /auth/callback, /.well-known/*)
+    oauth_routes = auth_provider.get_routes(mcp_path="/mcp") if auth_provider else []
+
+    # Create main Starlette app with OAuth routes at root and MCP under /mcp
+    app = Starlette(
+        routes=[
+            *oauth_routes,  # All OAuth endpoints at root level
+            Mount("/mcp", app=mcp_app),  # MCP endpoints under /mcp
+        ],
+        lifespan=mcp_app.router.lifespan_context,  # type: ignore[attr-defined]
+    )
 
     # Add CORS middleware
     app.add_middleware(
