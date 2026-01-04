@@ -138,7 +138,7 @@ def create_http_app():
     app = Starlette(
         routes=[
             *oauth_routes,  # All OAuth endpoints at root level
-            Mount("/mcp", app=mcp_app),  # MCP endpoints under /mcp
+            Mount("", app=mcp_app),  # MCP endpoints - empty string to avoid double mounting
         ],
         lifespan=mcp_app.router.lifespan_context,  # type: ignore[attr-defined]
     )
