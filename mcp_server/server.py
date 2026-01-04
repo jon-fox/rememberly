@@ -126,7 +126,7 @@ def create_http_app():
     mcp_server = create_mcp_server()
 
     # OAuth requires stateful mode to expose operational endpoints (/register, /authorize, /token)
-    app = mcp_server.http_app(path="/mcp", stateless_http=False)  # type: ignore[attr-defined]
+    app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
 
     # Add CORS middleware
     app.add_middleware(
