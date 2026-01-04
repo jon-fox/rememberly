@@ -1,5 +1,5 @@
-// Cloudflare Workers Authentication Module
-// Replaces Supabase with custom JWT-based auth
+// Google OAuth Authentication Module
+// Handles Google OAuth authentication via MCP server
 
 // Auth client state
 let authClient = null;

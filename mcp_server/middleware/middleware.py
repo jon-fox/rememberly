@@ -1,7 +1,7 @@
 """Authentication middleware for user lookup and validation.
 
 This middleware enriches the user context with data from DynamoDB.
-Users are validated based on X-User-Id header from Cloudflare Worker.
+Users are validated based on X-User-Id header from Google OAuth authentication.
 """
 
 import logging
@@ -30,7 +30,7 @@ class AuthMiddleware(Middleware):
         user_data = None
         user_validated = False
 
-        # Check for X-User-Id header from Cloudflare Worker
+        # Check for X-User-Id header from Google OAuth authentication
         # Access headers from ASGI scope
         try:
             if hasattr(context, 'scope') and 'headers' in context.scope:
@@ -40,7 +40,7 @@ class AuthMiddleware(Middleware):
                 if x_user_id:
                     user_id = x_user_id.decode('utf-8')
                     user_validated = True
-                    logger.info(f"User ID from Cloudflare header: {user_id}")
+                    logger.info(f"User ID from Google OAuth header: {user_id}")
                     
                     # Fetch user data from cache or DynamoDB
                     user_data = user_cache.get(user_id)
