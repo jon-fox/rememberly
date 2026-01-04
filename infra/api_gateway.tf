@@ -86,6 +86,20 @@ resource "aws_apigatewayv2_route" "oauth_callback" {
   target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
+resource "aws_apigatewayv2_route" "oauth_consent" {
+  api_id    = aws_apigatewayv2_api.mcp.id
+  route_key = "GET /consent"
+  
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "oauth_consent_post" {
+  api_id    = aws_apigatewayv2_api.mcp.id
+  route_key = "POST /consent"
+  
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
 # Stage
 resource "aws_apigatewayv2_stage" "prod" {
   api_id      = aws_apigatewayv2_api.mcp.id
