@@ -87,6 +87,7 @@ def create_mcp_server() -> FastMCP:
     logger.info("Creating MCP server instance")
 
     # Configure Google OAuth provider
+    # Using default in-memory storage (Lambda is stateless anyway)
     auth_provider = GoogleProvider(
         client_id=os.getenv("GOOGLE_CLIENT_ID"),
         client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),

@@ -24,6 +24,10 @@ COPY . ${LAMBDA_TASK_ROOT}/
 ENV PORT=8080
 ENV AWS_LWA_READINESS_CHECK_PATH=/
 
+# Set HOME to /tmp for Lambda (only writable directory)
+# This prevents FastMCP from trying to create directories in non-writable locations
+ENV HOME=/tmp
+
 # Override the Lambda entrypoint to run our web app directly
 ENTRYPOINT []
 
