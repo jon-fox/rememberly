@@ -1,98 +1,106 @@
 # Rememberly
 
-MCP Server for managing context and chat history across conversations.
+MCP Server for managing memory buckets and contextual data storage, deployed on AWS Lambda with Google OAuth authentication.
 
 ## Overview
 
-**Rememberly** is a Model Context Protocol (MCP) server that provides memory and context management capabilities to Large Language Models. It enables:
+**Rememberly** is a Model Context Protocol (MCP) server providing memory management capabilities via FastMCP. Features:
 
-- **Context Storage:** Persistent storage of conversation context
-- **Chat History:** Long-term memory across sessions
-- **Semantic Search:** Find relevant past conversations
-- **User Preferences:** Track and recall user information
-- **Session Management:** Maintain continuity across interactions
+- **Memory Storage:** S3-backed persistent memory storage with DynamoDB metadata
+- **Bucket Management:** Create, list, and delete memory buckets
+- **OAuth Authentication:** Google OAuth integration for secure access
+- **HTTP Transport:** RESTful API at https://mcp.rememberly.xyz
+- **AWS Deployment:** Lambda-based serverless architecture
 
 ## Architecture
 
-Rememberly follows a clean, modular architecture inspired by best practices:
-
 ```
 mcp_server/
-├── interfaces/          # Abstract base classes for tools, resources, prompts
-│   ├── tool.py         # Tool interface and response models
-│   ├── resource.py     # Resource interface
-│   └── prompt.py       # Prompt interface
-├── services/           # Service layer for managing components
-│   ├── tool_service.py
-│   ├── resource_service.py
-│   └── prompt_service.py
-├── tools/              # MCP tools implementation
-│   └── example_memory/ # Placeholder memory tool
-└── server.py           # FastMCP server configuration
+├── tools/              # MCP tools (memory operations, bucket management, metrics)
+├── resources/          # MCP resources (datetime, etc.)
+├── services/           # Service layer
+├── cache/              # User and secrets caching
+├── db/                 # DynamoDB user management
+├── utils/              # S3 storage utilities
+└── server.py           # FastMCP server with Google OAuth
 ```
 
-### Key Components
+### Infrastructure
 
-- **Interfaces**: Abstract base classes defining contracts for tools, resources, and prompts
-- **Services**: Registry and execution layer for MCP components
-- **Tools**: Actual implementation of memory and context operations
-- **Server**: FastMCP-based MCP server with tool registration
+- **API Gateway:** HTTP API with custom domain (mcp.rememberly.xyz)
+- **Lambda:** Containerized FastMCP server
+- **S3:** Memory storage bucket
+- **DynamoDB:** Metadata and user tracking
+- **Route53/ACM:** DNS and TLS certificates
 
 ## Prerequisites
 
-- **Python:** 3.12 or higher
-- **Package Manager:** [uv](https://docs.astral.sh/uv/). Install if needed:
-  ```bash
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  ```
+- **Python:** 3.12+
+- **Package Manager:** [uv](https://docs.astral.sh/uv/)
+- **AWS Account:** For Lambda deployment
+- **Google OAuth:** Client ID and secret from Google Cloud Console
+- **Terraform:** For infrastructure deployment
 
 ## Installation
 
-### Quick Start
-
 ```bash
-# Install from source
 git clone <repository-url>
 cd rememberly
 uv sync
 ```
 
-## Local Testing
+## Configuration
 
-For local development and testing, use the included `chat.py` script:
+### Environment Variables
+
+**Local Development:**
+```bash
+export GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+export GOOGLE_CLIENT_SECRET="your-client-secret"
+export MCP_BASE_URL="http://localhost:8000"
+```
+
+**Production (Lambda):**
+Set in `infra/terraform.tfvars`:
+```terraform
+google_client_id     = "your-client-id.apps.googleusercontent.com"
+google_client_secret = "your-client-secret"
+mcp_base_url        = "https://mcp.rememberly.xyz"
+```
+
+### Google OAuth Setup
+
+1. Create OAuth 2.0 credentials in Google Cloud Console
+2. Add authorized redirect URI: `https://mcp.rememberly.xyz/auth/callback`
+3. Configure client ID and secret in environment
+
+## Deployment
+
+### Build and Deploy
 
 ```bash
-# Install dev dependencies
-uv sync --group dev
+# Build Docker image
+cd mcp_server && ./build.sh
 
-# Set up your API key
-export OPENAI_API_KEY="your-api-key"  # or ANTHROPIC_API_KEY, GEMINI_API_KEY, etc.
+# Deploy infrastructure
+cd ../infra && terraform apply
 
-# Optional: Set custom model (defaults to openai:gpt-4o-mini)
-export MODEL_IDENTIFIER="your-preferred-model"
-
-# Run the chat interface
-python chat.py
+# Or use the deploy script
+cd ../infra && ./tf-apply.sh
 ```
 
-For available model providers and identifiers, see the [pydantic-ai documentation](https://ai.pydantic.dev/models/).
+### Local Testing
 
-## Usage with MCP Clients
+```Available Tools
 
-### Claude Desktop
-
-Add to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "Rememberly": {
-      "command": "uv",
-      "args": ["run", "rememberly"]
-    }
-  }
-}
-```
+- `store_memory` - Store memory in a bucket
+- `get_memory` - Retrieve memory by ID
+- `list_memories` - List memories in a bucket
+- `delete_memory` - Delete a memory
+- `create_bucket` - Create a new memory bucket
+- `list_buckets` - List all buckets
+- `delete_bucket` - Delete a bucket
+- `get_metrics` - Get storage metrics
 
 ## Development
 
@@ -100,51 +108,34 @@ Add to your `claude_desktop_config.json`:
 
 ```
 rememberly/
-├── mcp_server/             # Main MCP server package
-│   ├── __init__.py
-│   ├── _version.py
-│   ├── server.py          # MCP server entry point
-│   ├── interfaces/        # Abstract base classes
-│   ├── services/          # Service layer
-│   └── tools/             # Tool implementations
-├── chat.py                # Local testing script
-├── pyproject.toml         # Project configuration
-└── README.md
+├── mcp_server/
+│   ├── server.py           # FastMCP server with Google OAuth
+│   ├── tools/              # Memory and bucket management tools
+│   ├── resources/          # MCP resources
+│   ├── cache/              # User and secrets caching
+│   ├── db/                 # DynamoDB operations
+│   └── utils/              # S3 storage utilities
+├── infra/                  # Terraform infrastructure
+│   ├── api_gateway.tf      # API Gateway with OAuth routes
+│   ├── mcp.tf              # Lambda function
+│   ├── storage.tf          # S3 and DynamoDB
+│   └── route53.tf          # DNS configuration
+├── test_integration/       # Integration tests
+└── ui/                     # Web interface (legacy)
 ```
 
-### Adding New Tools
+### Testing
 
-1. Create a new directory under `tools/`:
-   ```bash
-   mkdir -p mcp_server/tools/my_tool
-   ```
+```bash
+# Integration tests
+cd test_integration
+uv run python test_oauth.py
+uv run python test_mcp_api.py
+```
 
-2. Create `models.py` with Pydantic input/output models:
-   ```python
-   from pydantic import BaseModel, Field
-   from interfaces.tool import BaseToolInput
+## License
 
-   class MyToolInput(BaseToolInput):
-       query: str = Field(description="Query parameter")
-
-   class MyToolOutput(BaseModel):
-       result: str = Field(description="Result data")
-   ```
-
-3. Create `my_tool.py` implementing the `Tool` interface:
-   ```python
-   from interfaces.tool import Tool, ToolResponse
-   from .models import MyToolInput, MyToolOutput
-
-   class MyTool(Tool):
-       name = "my_tool"
-       description = "Description of what this tool does"
-       input_model = MyToolInput
-       output_model = MyToolOutput
-
-       async def execute(self, input_data: MyToolInput) -> ToolResponse:
-           # Implementation here
-           output = MyToolOutput(result="...")
+MIT..")
            return ToolResponse.from_model(output)
    ```
 
