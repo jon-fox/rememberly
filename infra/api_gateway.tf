@@ -57,6 +57,35 @@ resource "aws_apigatewayv2_route" "well_known" {
   target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
+# OAuth operational endpoints
+resource "aws_apigatewayv2_route" "oauth_register" {
+  api_id    = aws_apigatewayv2_api.mcp.id
+  route_key = "POST /register"
+  
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "oauth_authorize" {
+  api_id    = aws_apigatewayv2_api.mcp.id
+  route_key = "GET /authorize"
+  
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "oauth_token" {
+  api_id    = aws_apigatewayv2_api.mcp.id
+  route_key = "POST /token"
+  
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "oauth_callback" {
+  api_id    = aws_apigatewayv2_api.mcp.id
+  route_key = "GET /auth/callback"
+  
+  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
 # Stage
 resource "aws_apigatewayv2_stage" "prod" {
   api_id      = aws_apigatewayv2_api.mcp.id

@@ -11,14 +11,14 @@ logging.basicConfig(level=logging.DEBUG)
 async def test_oauth():
     """Test OAuth authentication and tool listing."""
     print("🔐 Testing OAuth flow with Rememberly MCP server...")
-    print("📍 Server: https://mcp.rememberly.xyz")
+    print("📍 Server: https://mcp.rememberly.xyz/mcp")
     print("⏳ Waiting for OAuth callback (this may take a moment)...")
     print()
 
     try:
         # Increase timeout to allow time for manual OAuth login and Lambda warm-up
         async with Client(
-            "https://mcp.rememberly.xyz",
+            "https://mcp.rememberly.xyz/mcp",
             auth="oauth",
             init_timeout=300,  # 5 minutes for OAuth flow
             timeout=60,  # 60 seconds for individual requests (Lambda warm-up)
