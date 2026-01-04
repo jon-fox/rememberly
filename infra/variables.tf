@@ -21,3 +21,21 @@ variable "mcp_image_version" {
     type        = string
     default     = "1"
 }
+
+variable "google_client_id" {
+    description = "Google OAuth Client ID for MCP server authentication"
+    type        = string
+    sensitive   = false
+}
+
+variable "google_client_secret" {
+    description = "Google OAuth Client Secret for MCP server authentication"
+    type        = string
+    sensitive   = true
+}
+
+variable "mcp_base_url" {
+    description = "Base URL for MCP server OAuth callbacks"
+    type        = string
+    default     = "https://mcp.rememberly.xyz"
+}

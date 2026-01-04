@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from interfaces.tool import Tool, ToolResponse
 from .models import StoreMemoryInput, StoreMemoryOutput
 from utils import get_shared_storage
-from services.tool_service import get_user_context
+from services.tool_service import get_user_email
 
 
 class StoreMemoryTool(Tool):
@@ -50,14 +50,8 @@ class StoreMemoryTool(Tool):
         Returns:
             A response confirming the memory was stored
         """
-        # Get user context for isolation
-        user_context = get_user_context()
-        if not user_context.email:
-            return ToolResponse.from_text(
-                "Error: User email not found. Authentication required."
-            )
-        
-        storage_key = self._get_storage_key(input_data.key, input_data.bucket, user_context.email)
+        user_email = get_user_email()
+        storage_key = self._get_storage_key(input_data.key, input_data.bucket, user_email)
         now = datetime.now(timezone.utc)
 
         # Store the memory with metadata

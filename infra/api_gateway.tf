@@ -106,6 +106,26 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
   }
 }
 
-# Custom domain for old MCP API Gateway (kept for compatibility during transition)
-# MCP domain (mcp.rememberly.xyz) now handled by Cloudflare Worker
-# API Gateway custom domain removed - Worker proxies to api.rememberly.xyz instead
+# Custom domain for mcp.rememberly.xyz
+resource "aws_apigatewayv2_domain_name" "mcp" {
+  domain_name = local.mcp_domain
+
+  domain_name_configuration {
+    certificate_arn = aws_acm_certificate.mcp.arn
+    endpoint_type   = "REGIONAL"
+    security_policy = "TLS_1_2"
+  }
+
+  tags = {
+    Name        = local.mcp_domain
+    Environment = var.environment
+    Project     = "rememberly"
+  }
+}
+
+# API Gateway mapping for MCP domain
+resource "aws_apigatewayv2_api_mapping" "mcp" {
+  api_id      = aws_apigatewayv2_api.mcp.id
+  domain_name = aws_apigatewayv2_domain_name.mcp.id
+  stage       = aws_apigatewayv2_stage.prod.id
+}

@@ -10,11 +10,6 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.0"
     }
-
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
-    }
   }
 
   backend "s3" {
@@ -22,11 +17,6 @@ terraform {
     key    = "terraform/rememberly/terraform.tfstate"
     region = "us-east-1"
   }
-}
-
-# Configure Cloudflare provider
-provider "cloudflare" {
-  api_token = "D_aBLZbSpuNCUCyC2_-KRgcTv1Ryq3LvR37Gd5B8"
 }
 
 provider "aws" {

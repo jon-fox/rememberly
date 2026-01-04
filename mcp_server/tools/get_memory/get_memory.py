@@ -4,7 +4,7 @@ from typing import Dict, Any
 from interfaces.tool import Tool, ToolResponse
 from .models import GetMemoryInput, GetMemoryOutput
 from utils import get_shared_storage
-from services.tool_service import get_user_context
+from services.tool_service import get_user_email
 
 
 class GetMemoryTool(Tool):
@@ -48,14 +48,8 @@ class GetMemoryTool(Tool):
         Returns:
             A response containing the retrieved memory or indication it wasn't found
         """
-        # Get user context for isolation
-        user_context = get_user_context()
-        if not user_context.email:
-            return ToolResponse.from_text(
-                "Error: User email not found. Authentication required."
-            )
-        
-        storage_key = self._get_storage_key(input_data.key, input_data.bucket, user_context.email)
+        user_email = get_user_email()
+        storage_key = self._get_storage_key(input_data.key, input_data.bucket, user_email)
 
         if self._storage.has(storage_key):
             memory_data = self._storage.get(storage_key)

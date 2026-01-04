@@ -4,7 +4,7 @@ from typing import Dict, Any
 from interfaces.tool import Tool, ToolResponse
 from .models import ListBucketsInput, ListBucketsOutput, BucketInfo
 from utils import get_shared_storage
-from services.tool_service import get_user_context
+from services.tool_service import get_user_email
 
 
 class ListBucketsTool(Tool):
@@ -54,15 +54,8 @@ class ListBucketsTool(Tool):
         Returns:
             A response containing the list of buckets
         """
-        # Get user context for isolation
-        user_context = get_user_context()
-        if not user_context.email:
-            return ToolResponse.from_text(
-                "Error: User email not found. Authentication required."
-            )
-        
-        # Get all storage keys for this user
-        all_keys = self._storage.keys_for_user(user_context.email)
+        user_email = get_user_email()
+        all_keys = self._storage.keys_for_user(user_email)
 
         # Count memories per bucket
         bucket_counts: Dict[str, int] = {}

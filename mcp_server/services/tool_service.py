@@ -2,50 +2,45 @@
 
 from typing import Dict, List, Any
 from functools import wraps
-from contextvars import ContextVar
 from fastmcp import FastMCP
+from fastmcp.server.dependencies import get_access_token
 from interfaces.tool import Tool, ToolResponse, ToolContent
-from models import UserContext
 import logging
 
 
 logger = logging.getLogger(__name__)
 
-# Context variable to store user context across async calls
-_user_context: ContextVar[UserContext] = ContextVar("user_context", default=None)
+
+def get_user_email() -> str:
+    """Get the current user's email from the access token."""
+    token = get_access_token()
+    return token.claims.get("email")
 
 
-def get_user_context() -> UserContext:
-    """Get the current user context."""
-    ctx = _user_context.get()
-    return ctx if ctx else UserContext()
-
-
-def set_user_context(user_context: UserContext) -> None:
-    """Set the current user context."""
-    _user_context.set(user_context)
+def get_user_id() -> str:
+    """Get the current user's ID (sub) from the access token."""
+    token = get_access_token()
+    return token.claims.get("sub")
 
 
 def require_auth(func):
-    """Decorator to require authenticated user for tool execution."""
+    """Decorator for logging tool execution.
+    
+    Note: With FastMCP GoogleProvider, authentication is enforced at the server level.
+    If a request reaches the tool, the user is already authenticated.
+    """
 
     @wraps(func)
     async def wrapper(*args, **kwargs):
-        user_context = get_user_context()
-        logger.info(f"Tool call: {func.__name__} | Args: {args} | Kwargs: {kwargs}")
-        logger.info(
-            f"require_auth check for {func.__name__}: is_authenticated={user_context.is_authenticated}, email={user_context.email}"
-        )
+        try:
+            user_email = get_user_email()
+            user_id = get_user_id()
+            logger.info(f"Tool call: {func.__name__} | User: {user_email} (ID: {user_id})")
+        except Exception as e:
+            logger.warning(f"Could not extract user info: {str(e)}")
 
-        if not user_context.is_authenticated:
-            logger.warning(f"Authentication failed for tool {func.__name__}")
-            return ToolResponse.from_text(
-                "Error: Authentication required. Please ensure you have a valid access token."
-            )
-
-        logger.info(f"Authentication passed for {func.__name__}, executing tool")
         result = await func(*args, **kwargs)
-        logger.info(f"Tool {func.__name__} completed successfully")
+        logger.info(f"Tool {func.__name__} completed")
         return result
 
     return wrapper

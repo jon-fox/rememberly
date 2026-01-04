@@ -85,10 +85,13 @@ resource "aws_lambda_function" "mcp_server" {
 
   environment {
     variables = {
-      STORAGE_BUCKET    = aws_s3_bucket.storage.id
-      DYNAMODB_TABLE    = aws_dynamodb_table.metadata.name
-      ENVIRONMENT       = var.environment
-      IMAGE_VERSION     = var.mcp_image_version
+      STORAGE_BUCKET      = aws_s3_bucket.storage.id
+      DYNAMODB_TABLE      = aws_dynamodb_table.metadata.name
+      ENVIRONMENT         = var.environment
+      IMAGE_VERSION       = var.mcp_image_version
+      GOOGLE_CLIENT_ID    = var.google_client_id
+      GOOGLE_CLIENT_SECRET = var.google_client_secret
+      MCP_BASE_URL        = var.mcp_base_url
     }
   }
 

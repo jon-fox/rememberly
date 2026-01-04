@@ -1,14 +1,15 @@
 """Rememberly MCP Server - Context and Chat History Management."""
 
 import logging
+import os
 from typing import List
 
 from fastmcp import FastMCP
+from fastmcp.server.auth.providers.google import GoogleProvider
 from starlette.middleware.cors import CORSMiddleware
 
 from interfaces.resource import Resource
 from interfaces.tool import Tool
-from middleware import AuthMiddleware
 from resources import DateTimeResource
 from services.resource_service import ResourceService
 from services.tool_service import ToolService
@@ -85,14 +86,23 @@ def create_mcp_server() -> FastMCP:
     """Create and configure the MCP server."""
     logger.info("Creating MCP server instance")
 
+    # Configure Google OAuth provider
+    auth_provider = GoogleProvider(
+        client_id=os.getenv("GOOGLE_CLIENT_ID"),
+        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+        base_url=os.getenv("MCP_BASE_URL", "http://localhost:8000"),
+        required_scopes=[
+            "openid",
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/userinfo.profile",
+        ],
+    )
+
     mcp = FastMCP(
         "Rememberly",
         instructions=MCP_INSTRUCTIONS,
+        auth=auth_provider,
     )
-    
-    # Add middleware to MCP server
-    logger.info("Adding authentication middleware")
-    mcp.add_middleware(AuthMiddleware())
     
     tool_service = ToolService()
     resource_service = ResourceService()

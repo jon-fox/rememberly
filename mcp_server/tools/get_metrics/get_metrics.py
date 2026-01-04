@@ -6,7 +6,7 @@ from datetime import datetime
 from interfaces.tool import Tool, ToolResponse
 from .models import GetMetricsInput, GetMetricsOutput, BucketMetrics, MemoryDetail
 from utils import get_shared_storage
-from services.tool_service import get_user_context
+from services.tool_service import get_user_email
 
 
 class GetMetricsTool(Tool):
@@ -68,15 +68,8 @@ class GetMetricsTool(Tool):
         Returns:
             A response containing storage metrics
         """
-        # Get user context for isolation
-        user_context = get_user_context()
-        if not user_context.email:
-            return ToolResponse.from_text(
-                "Error: User email not found. Authentication required."
-            )
-        
-        # Get all storage keys for this user
-        all_keys = self._storage.keys_for_user(user_context.email)
+        user_email = get_user_email()
+        all_keys = self._storage.keys_for_user(user_email)
 
         # Organize data by bucket
         bucket_data: Dict[str, List[tuple[str, Any]]] = {}

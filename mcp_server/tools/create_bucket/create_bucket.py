@@ -4,7 +4,7 @@ from typing import Dict, Any
 from interfaces.tool import Tool, ToolResponse
 from .models import CreateBucketInput, CreateBucketOutput
 from utils import get_shared_storage
-from services.tool_service import get_user_context
+from services.tool_service import get_user_email
 
 
 class CreateBucketTool(Tool):
@@ -43,13 +43,7 @@ class CreateBucketTool(Tool):
         Returns:
             A response confirming the bucket was created
         """
-        # Get user context for isolation
-        user_context = get_user_context()
-        if not user_context.email:
-            return ToolResponse.from_text(
-                "Error: User email not found. Authentication required."
-            )
-        
+        user_email = get_user_email()
         bucket_name = input_data.name.lower().strip()
 
         # Validate bucket name
@@ -62,8 +56,8 @@ class CreateBucketTool(Tool):
             return ToolResponse.from_model(output)
 
         # Check if bucket already exists by looking for any keys with this bucket
-        all_keys = self._storage.keys_for_user(user_context.email)
-        bucket_prefix = f"{user_context.email}/{bucket_name}/"
+        all_keys = self._storage.keys_for_user(user_email)
+        bucket_prefix = f"{user_email}/{bucket_name}/"
         bucket_exists = any(key.startswith(bucket_prefix) for key in all_keys)
 
         if bucket_exists:

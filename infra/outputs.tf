@@ -40,22 +40,20 @@ output "cloudfront_domain_name" {
   value       = aws_cloudfront_distribution.main.domain_name
 }
 
-# Route53 outputs - DEPRECATED: DNS now in Cloudflare
-/*
+# Route53 outputs
 output "route53_zone_id" {
   description = "ID of the Route53 hosted zone"
   value       = aws_route53_zone.main.zone_id
 }
 
 output "route53_name_servers" {
-  description = "Name servers for the Route53 hosted zone"
+  description = "Name servers for the Route53 hosted zone - Update these at your domain registrar"
   value       = aws_route53_zone.main.name_servers
 }
-*/
 
 # MCP API outputs
 output "mcp_endpoint" {
-  description = "MCP API endpoint URL (user-facing via Cloudflare Worker)"
+  description = "MCP API endpoint URL"
   value       = "https://${local.mcp_domain}"
 }
 

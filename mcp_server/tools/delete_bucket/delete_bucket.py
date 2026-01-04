@@ -4,7 +4,7 @@ from typing import Dict, Any
 from interfaces.tool import Tool, ToolResponse
 from .models import DeleteBucketInput, DeleteBucketOutput
 from utils import get_shared_storage
-from services.tool_service import get_user_context
+from services.tool_service import get_user_email
 
 
 class DeleteBucketTool(Tool):
@@ -53,13 +53,7 @@ class DeleteBucketTool(Tool):
         Returns:
             A response confirming whether the bucket was deleted
         """
-        # Get user context for isolation
-        user_context = get_user_context()
-        if not user_context.email:
-            return ToolResponse.from_text(
-                "Error: User email not found. Authentication required."
-            )
-        
+        user_email = get_user_email()
         bucket_name = input_data.name.lower().strip()
 
         # Prevent deletion of default bucket
@@ -74,7 +68,7 @@ class DeleteBucketTool(Tool):
             return ToolResponse.from_model(output)
 
         # Find all keys in this bucket for this user
-        all_keys = self._storage.keys_for_user(user_context.email)
+        all_keys = self._storage.keys_for_user(user_email)
         bucket_keys = [
             key for key in all_keys 
             if self._parse_storage_key(key)[1] == bucket_name
