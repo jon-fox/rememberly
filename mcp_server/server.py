@@ -84,31 +84,45 @@ def get_available_resources() -> List[Resource]:
 
 def create_mcp_server() -> FastMCP:
     """Create and configure the MCP server."""
-    logger.info("Creating MCP server instance")
+    logger.info("[SERVER] Creating MCP server instance")
 
     # Configure Google OAuth provider
     # Using default in-memory storage (Lambda is stateless anyway)
+    google_client_id = os.getenv("GOOGLE_CLIENT_ID")
+    google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+    base_url = os.getenv("MCP_BASE_URL", "http://localhost:8000")
+    
+    logger.info(f"[SERVER] Configuring GoogleProvider with:")
+    logger.info(f"[SERVER]   - client_id: {google_client_id[:20]}... (truncated)" if google_client_id else "[SERVER]   - client_id: NOT SET")
+    logger.info(f"[SERVER]   - client_secret: {'*' * 20}" if google_client_secret else "[SERVER]   - client_secret: NOT SET")
+    logger.info(f"[SERVER]   - base_url: {base_url}")
+    logger.info(f"[SERVER]   - scopes: openid, userinfo.email, userinfo.profile")
+    
     auth_provider = GoogleProvider(
-        client_id=os.getenv("GOOGLE_CLIENT_ID"),
-        client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
-        base_url=os.getenv("MCP_BASE_URL", "http://localhost:8000"),
+        client_id=google_client_id,
+        client_secret=google_client_secret,
+        base_url=base_url,
         required_scopes=[
             "openid",
             "https://www.googleapis.com/auth/userinfo.email",
             "https://www.googleapis.com/auth/userinfo.profile",
         ],
     )
+    
+    logger.info(f"[SERVER] GoogleProvider created successfully")
 
+    logger.info(f"[SERVER] Creating FastMCP instance with auth provider")
     mcp = FastMCP(
         "Rememberly",
         instructions=MCP_INSTRUCTIONS,
         auth=auth_provider,
     )
+    logger.info(f"[SERVER] FastMCP instance created")
     
     tool_service = ToolService()
     resource_service = ResourceService()
 
-    logger.info("Registering tools and MCP handlers")
+    logger.info("[SERVER] Registering tools and MCP handlers")
     tool_service.register_tools(get_available_tools())
     tool_service.register_mcp_handlers(mcp)
 
@@ -123,12 +137,17 @@ def create_mcp_server() -> FastMCP:
 
 def create_http_app():
     """Create a FastMCP HTTP app with OAuth routes and CORS middleware."""
+    logger.info("[SERVER] Creating HTTP app")
     mcp_server = create_mcp_server()
 
     # OAuth requires stateful mode to expose operational endpoints (/register, /authorize, /token)
+    logger.info("[SERVER] Creating HTTP app with stateless_http=True")
+    logger.warning("[SERVER] WARNING: stateless_http=True means OAuth tokens are NOT persisted in memory!")
     app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
+    logger.info("[SERVER] HTTP app created")
 
     # Add CORS middleware
+    logger.info("[SERVER] Adding CORS middleware")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -136,9 +155,17 @@ def create_http_app():
         allow_headers=["*"],
         allow_credentials=True,
     )
+    logger.info("[SERVER] CORS middleware added")
 
     return app
 
 
 # Export app for uvicorn (used by Lambda Web Adapter)
+logger.info("[SERVER] ========================================")
+logger.info("[SERVER] Initializing Rememberly MCP Server")
+logger.info("[SERVER] ========================================")
 app = create_http_app()
+logger.info("[SERVER] ========================================")
+logger.info("[SERVER] Server initialization complete")
+logger.info("[SERVER] Ready to accept connections")
+logger.info("[SERVER] ========================================")
