@@ -11,7 +11,6 @@ from fastmcp.server.middleware import Middleware, MiddlewareContext, CallNext
 from cache import user_cache
 from db import users
 from models import UserContext
-from services.tool_service import set_user_context
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +106,8 @@ class AuthMiddleware(Middleware):
             user_validated=user_validated,
         )
 
-        set_user_context(user_context)
+        # User context is created but not stored globally since FastMCP handles auth
+        logger.info(f"[MIDDLEWARE] User context created: {user_context}")
 
         logger.info(f"[MIDDLEWARE] Calling next handler for {context.method}")
         result = await call_next(context)
