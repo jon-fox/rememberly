@@ -34,9 +34,13 @@ class AuthMiddleware(Middleware):
         # Access headers from ASGI scope
         try:
             logger.info(f"[MIDDLEWARE] Checking for headers in context")
+            logger.info(f"[MIDDLEWARE] Context attributes: {dir(context)}")
             if hasattr(context, 'scope') and 'headers' in context.scope:
                 headers = dict(context.scope['headers'])
                 logger.info(f"[MIDDLEWARE] Found {len(headers)} headers")
+                logger.info(f"[MIDDLEWARE] Scope path: {context.scope.get('path', 'N/A')}")
+                logger.info(f"[MIDDLEWARE] Scope method: {context.scope.get('method', 'N/A')}")
+                
                 # Log all headers for debugging (without sensitive values)
                 for key, value in headers.items():
                     header_name = key.decode('utf-8') if isinstance(key, bytes) else key

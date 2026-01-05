@@ -10,6 +10,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from interfaces.resource import Resource
 from interfaces.tool import Tool
+from middleware.logging_middleware import LoggingMiddleware
 from resources import DateTimeResource
 from services.resource_service import ResourceService
 from services.tool_service import ToolService
@@ -157,6 +158,11 @@ def create_http_app():
         allow_credentials=True,
     )
     logger.info("[SERVER] CORS middleware added")
+
+    # Add HTTP logging middleware to debug OAuth flow
+    logger.info("[SERVER] Adding HTTP logging middleware")
+    app.add_middleware(LoggingMiddleware)
+    logger.info("[SERVER] HTTP logging middleware added")
 
     return app
 
