@@ -35,7 +35,7 @@ class ListMemoriesTool(Tool):
 
     def _parse_storage_key(self, storage_key: str) -> tuple[str, str, str]:
         """Parse a storage key into user_email, bucket and key.
-        
+
         Format: {user_email}/{bucket}/{key}
         """
         parts = storage_key.split("/", 2)

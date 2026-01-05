@@ -23,62 +23,62 @@ def get_table():
     return dynamodb.Table(table_name)
 
 
-def create_or_update_user(user_id: str, email: str, username: str = None) -> Dict[str, Any]:
+def create_or_update_user(
+    user_id: str, email: str, username: str = None
+) -> Dict[str, Any]:
     """Create a new user or update existing user if data has changed."""
     table = get_table()
     timestamp = datetime.utcnow().isoformat()
 
     # Check if user already exists
     try:
-        response = table.get_item(
-            Key={
-                "pk": f"USER#{user_id}",
-                "sk": "PROFILE"
-            }
-        )
-        
+        response = table.get_item(Key={"pk": f"USER#{user_id}", "sk": "PROFILE"})
+
         existing_user = response.get("Item")
-        
+
         if existing_user:
             # Check if any data has changed
             needs_update = False
             updates = {}
-            
+
             if existing_user.get("email") != email:
                 updates["email"] = email
                 needs_update = True
-            
+
             if username and existing_user.get("username") != username:
                 updates["username"] = username
                 needs_update = True
-            
+
             if needs_update:
                 # Update only changed fields
                 updates["updated_at"] = timestamp
-                
-                update_expression = "SET " + ", ".join([f"#{k} = :{k}" for k in updates.keys()])
+
+                update_expression = "SET " + ", ".join(
+                    [f"#{k} = :{k}" for k in updates.keys()]
+                )
                 expression_attribute_names = {f"#{k}": k for k in updates.keys()}
                 expression_attribute_values = {f":{k}": v for k, v in updates.items()}
-                
+
                 table.update_item(
-                    Key={
-                        "pk": f"USER#{user_id}",
-                        "sk": "PROFILE"
-                    },
+                    Key={"pk": f"USER#{user_id}", "sk": "PROFILE"},
                     UpdateExpression=update_expression,
                     ExpressionAttributeNames=expression_attribute_names,
-                    ExpressionAttributeValues=expression_attribute_values
+                    ExpressionAttributeValues=expression_attribute_values,
                 )
-                logger.info(f"Updated user in DynamoDB: {user_id}, changes: {list(updates.keys())}")
+                logger.info(
+                    f"Updated user in DynamoDB: {user_id}, changes: {list(updates.keys())}"
+                )
             else:
-                logger.info(f"User {user_id} already exists with same data, skipping update")
-            
+                logger.info(
+                    f"User {user_id} already exists with same data, skipping update"
+                )
+
             return existing_user
-    
+
     except ClientError as e:
-        if e.response['Error']['Code'] != 'ResourceNotFoundException':
+        if e.response["Error"]["Code"] != "ResourceNotFoundException":
             raise
-    
+
     # User doesn't exist, create new user
     user_data = {
         "pk": f"USER#{user_id}",
@@ -94,7 +94,7 @@ def create_or_update_user(user_id: str, email: str, username: str = None) -> Dic
 
     table.put_item(Item=user_data)
     logger.info(f"Created user in DynamoDB: {user_id}")
-    
+
     # Create default bucket in S3
     # Storage key format: {user_email}/{bucket}/{key}
     storage_bucket = os.getenv("STORAGE_BUCKET")
@@ -102,18 +102,16 @@ def create_or_update_user(user_id: str, email: str, username: str = None) -> Dic
         try:
             # Create the default bucket path/folder in S3
             s3_key = f"{email}/default/"
-            
-            s3_client.put_object(
-                Bucket=storage_bucket,
-                Key=s3_key,
-                Body=b''
-            )
+
+            s3_client.put_object(Bucket=storage_bucket, Key=s3_key, Body=b"")
             logger.info(f"Created default bucket path in S3 for user: {email}")
         except ClientError as e:
             logger.error(f"Failed to create default bucket in S3 for {email}: {str(e)}")
             # Don't fail user creation if bucket creation fails
     else:
-        logger.warning("STORAGE_BUCKET environment variable not set, skipping S3 bucket creation")
+        logger.warning(
+            "STORAGE_BUCKET environment variable not set, skipping S3 bucket creation"
+        )
 
     return user_data
 

@@ -21,7 +21,7 @@ class AuthMiddleware(Middleware):
 
     async def on_message(self, context: MiddlewareContext, call_next: CallNext) -> Any:
         """Log all MCP messages and enrich user context."""
-        
+
         # Log the incoming request
         logger.info(f"[MIDDLEWARE] Processing {context.method} from {context.source}")
 
@@ -35,49 +35,66 @@ class AuthMiddleware(Middleware):
         try:
             logger.info(f"[MIDDLEWARE] Checking for headers in context")
             logger.info(f"[MIDDLEWARE] Context attributes: {dir(context)}")
-            if hasattr(context, 'scope') and 'headers' in context.scope:
-                headers = dict(context.scope['headers'])
+            if hasattr(context, "scope") and "headers" in context.scope:
+                headers = dict(context.scope["headers"])
                 logger.info(f"[MIDDLEWARE] Found {len(headers)} headers")
-                logger.info(f"[MIDDLEWARE] Scope path: {context.scope.get('path', 'N/A')}")
-                logger.info(f"[MIDDLEWARE] Scope method: {context.scope.get('method', 'N/A')}")
-                
+                logger.info(
+                    f"[MIDDLEWARE] Scope path: {context.scope.get('path', 'N/A')}"
+                )
+                logger.info(
+                    f"[MIDDLEWARE] Scope method: {context.scope.get('method', 'N/A')}"
+                )
+
                 # Log all headers for debugging (without sensitive values)
                 for key, value in headers.items():
-                    header_name = key.decode('utf-8') if isinstance(key, bytes) else key
+                    header_name = key.decode("utf-8") if isinstance(key, bytes) else key
                     logger.info(f"[MIDDLEWARE] Header: {header_name}")
-                
+
                 # Headers are bytes in ASGI
-                x_user_id = headers.get(b'x-user-id')
+                x_user_id = headers.get(b"x-user-id")
                 if x_user_id:
-                    user_id = x_user_id.decode('utf-8')
+                    user_id = x_user_id.decode("utf-8")
                     user_validated = True
-                    logger.info(f"[MIDDLEWARE] User ID from Google OAuth header: {user_id}")
+                    logger.info(
+                        f"[MIDDLEWARE] User ID from Google OAuth header: {user_id}"
+                    )
                 else:
                     logger.warning(f"[MIDDLEWARE] No X-User-Id header found in request")
-                    
+
                     # Fetch user data from cache or DynamoDB
                     logger.info(f"[MIDDLEWARE] Fetching user data for {user_id}")
                     user_data = user_cache.get(user_id)
                     if user_data is None:
-                        logger.info(f"[MIDDLEWARE] User not in cache, querying DynamoDB")
+                        logger.info(
+                            f"[MIDDLEWARE] User not in cache, querying DynamoDB"
+                        )
                         try:
                             user_data = users.get_user(user_id)
                             if user_data:
-                                logger.info(f"[MIDDLEWARE] Found user in DynamoDB, caching")
+                                logger.info(
+                                    f"[MIDDLEWARE] Found user in DynamoDB, caching"
+                                )
                                 user_cache.set(user_id, user_data)
-                                email = user_data.get('email')
+                                email = user_data.get("email")
                             else:
-                                logger.warning(f"[MIDDLEWARE] User {user_id} not found in DynamoDB")
+                                logger.warning(
+                                    f"[MIDDLEWARE] User {user_id} not found in DynamoDB"
+                                )
                         except Exception as e:
-                            logger.error(f"[MIDDLEWARE] Error retrieving user data from DynamoDB: {str(e)}")
+                            logger.error(
+                                f"[MIDDLEWARE] Error retrieving user data from DynamoDB: {str(e)}"
+                            )
                     else:
                         logger.info(f"[MIDDLEWARE] User found in cache")
-                        email = user_data.get('email') if user_data else None
+                        email = user_data.get("email") if user_data else None
             else:
                 logger.warning(f"[MIDDLEWARE] No scope or headers in context")
         except Exception as e:
-            logger.error(f"[MIDDLEWARE] Exception extracting X-User-Id header: {str(e)}")
+            logger.error(
+                f"[MIDDLEWARE] Exception extracting X-User-Id header: {str(e)}"
+            )
             import traceback
+
             logger.error(f"[MIDDLEWARE] Traceback: {traceback.format_exc()}")
 
         logger.info(
@@ -91,9 +108,9 @@ class AuthMiddleware(Middleware):
         )
 
         set_user_context(user_context)
-        
+
         logger.info(f"[MIDDLEWARE] Calling next handler for {context.method}")
         result = await call_next(context)
         logger.info(f"[MIDDLEWARE] Completed {context.method}")
-        
+
         return result

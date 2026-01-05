@@ -34,7 +34,7 @@ class DeleteMemoryTool(Tool):
 
     def _get_storage_key(self, key: str, bucket: str, user_email: str) -> str:
         """Generate a storage key with user and bucket.
-        
+
         Format: {user_email}/{bucket}/{key}
         """
         return f"{user_email}/{bucket}/{key}"
@@ -49,7 +49,9 @@ class DeleteMemoryTool(Tool):
             A response confirming whether the memory was deleted
         """
         user_email = get_user_email()
-        storage_key = self._get_storage_key(input_data.key, input_data.bucket, user_email)
+        storage_key = self._get_storage_key(
+            input_data.key, input_data.bucket, user_email
+        )
 
         deleted = self._storage.delete(storage_key)
 

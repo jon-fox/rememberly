@@ -92,13 +92,21 @@ def create_mcp_server() -> FastMCP:
     google_client_id = os.getenv("GOOGLE_CLIENT_ID")
     google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
     base_url = os.getenv("MCP_BASE_URL", "http://localhost:8000")
-    
+
     logger.info(f"[SERVER] Configuring GoogleProvider with:")
-    logger.info(f"[SERVER]   - client_id: {google_client_id[:20]}... (truncated)" if google_client_id else "[SERVER]   - client_id: NOT SET")
-    logger.info(f"[SERVER]   - client_secret: {'*' * 20}" if google_client_secret else "[SERVER]   - client_secret: NOT SET")
+    logger.info(
+        f"[SERVER]   - client_id: {google_client_id[:20]}... (truncated)"
+        if google_client_id
+        else "[SERVER]   - client_id: NOT SET"
+    )
+    logger.info(
+        f"[SERVER]   - client_secret: {'*' * 20}"
+        if google_client_secret
+        else "[SERVER]   - client_secret: NOT SET"
+    )
     logger.info(f"[SERVER]   - base_url: {base_url}")
     logger.info(f"[SERVER]   - scopes: openid, userinfo.email, userinfo.profile")
-    
+
     auth_provider = GoogleProvider(
         client_id=google_client_id,
         client_secret=google_client_secret,
@@ -109,7 +117,7 @@ def create_mcp_server() -> FastMCP:
             "https://www.googleapis.com/auth/userinfo.profile",
         ],
     )
-    
+
     logger.info(f"[SERVER] GoogleProvider created successfully")
 
     logger.info(f"[SERVER] Creating FastMCP instance with auth provider")
@@ -119,7 +127,7 @@ def create_mcp_server() -> FastMCP:
         auth=auth_provider,
     )
     logger.info(f"[SERVER] FastMCP instance created")
-    
+
     tool_service = ToolService()
     resource_service = ResourceService()
 

@@ -34,7 +34,7 @@ class DeleteBucketTool(Tool):
 
     def _parse_storage_key(self, storage_key: str) -> tuple[str, str, str]:
         """Parse a storage key into user_email, bucket and key.
-        
+
         Format: {user_email}/{bucket}/{key}
         """
         parts = storage_key.split("/", 2)
@@ -70,8 +70,7 @@ class DeleteBucketTool(Tool):
         # Find all keys in this bucket for this user
         all_keys = self._storage.keys_for_user(user_email)
         bucket_keys = [
-            key for key in all_keys 
-            if self._parse_storage_key(key)[1] == bucket_name
+            key for key in all_keys if self._parse_storage_key(key)[1] == bucket_name
         ]
 
         # Check if bucket exists

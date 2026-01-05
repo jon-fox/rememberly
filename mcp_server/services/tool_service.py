@@ -25,7 +25,7 @@ def get_user_id() -> str:
 
 def require_auth(func):
     """Decorator for logging tool execution.
-    
+
     Note: With FastMCP GoogleProvider, authentication is enforced at the server level.
     If a request reaches the tool, the user is already authenticated.
     """
@@ -35,7 +35,9 @@ def require_auth(func):
         try:
             user_email = get_user_email()
             user_id = get_user_id()
-            logger.info(f"Tool call: {func.__name__} | User: {user_email} (ID: {user_id})")
+            logger.info(
+                f"Tool call: {func.__name__} | User: {user_email} (ID: {user_id})"
+            )
         except Exception as e:
             logger.warning(f"Could not extract user info: {str(e)}")
 

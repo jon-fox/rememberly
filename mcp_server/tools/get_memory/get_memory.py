@@ -34,7 +34,7 @@ class GetMemoryTool(Tool):
 
     def _get_storage_key(self, key: str, bucket: str, user_email: str) -> str:
         """Generate a storage key with user and bucket.
-        
+
         Format: {user_email}/{bucket}/{key}
         """
         return f"{user_email}/{bucket}/{key}"
@@ -49,7 +49,9 @@ class GetMemoryTool(Tool):
             A response containing the retrieved memory or indication it wasn't found
         """
         user_email = get_user_email()
-        storage_key = self._get_storage_key(input_data.key, input_data.bucket, user_email)
+        storage_key = self._get_storage_key(
+            input_data.key, input_data.bucket, user_email
+        )
 
         if self._storage.has(storage_key):
             memory_data = self._storage.get(storage_key)
