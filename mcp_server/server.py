@@ -141,9 +141,9 @@ def create_http_app():
     mcp_server = create_mcp_server()
 
     # OAuth requires stateful mode to expose operational endpoints (/register, /authorize, /token)
-    logger.info("[SERVER] Creating HTTP app with stateless_http=True")
-    logger.warning("[SERVER] WARNING: stateless_http=True means OAuth tokens are NOT persisted in memory!")
-    app = mcp_server.http_app(path="/mcp", stateless_http=True)  # type: ignore[attr-defined]
+    logger.info("[SERVER] Creating HTTP app with stateless_http=False")
+    logger.info("[SERVER] Stateful mode will maintain OAuth tokens in memory")
+    app = mcp_server.http_app(path="/mcp", stateless_http=False)  # type: ignore[attr-defined]
     logger.info("[SERVER] HTTP app created")
 
     # Add CORS middleware
