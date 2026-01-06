@@ -76,11 +76,11 @@ resource "aws_ssm_parameter" "mcp_endpoint" {
   }
 }
 
-resource "aws_ssm_parameter" "mcp_lambda_function_name" {
-  name        = "/application/mcp_api/lambda_function_name"
-  description = "Name of the MCP Lambda function"
+resource "aws_ssm_parameter" "mcp_asg_name" {
+  name        = "/application/mcp_api/asg_name"
+  description = "Name of the MCP Auto Scaling Group"
   type        = "String"
-  value       = aws_lambda_function.mcp_server.function_name
+  value       = aws_autoscaling_group.mcp.name
 
   tags = {
     Environment = var.environment
@@ -89,11 +89,11 @@ resource "aws_ssm_parameter" "mcp_lambda_function_name" {
   }
 }
 
-resource "aws_ssm_parameter" "mcp_lambda_function_arn" {
-  name        = "/application/mcp_api/lambda_function_arn"
-  description = "ARN of the MCP Lambda function"
+resource "aws_ssm_parameter" "mcp_eip" {
+  name        = "/application/mcp_api/elastic_ip"
+  description = "Elastic IP for MCP EC2 instance"
   type        = "String"
-  value       = aws_lambda_function.mcp_server.arn
+  value       = aws_eip.mcp.public_ip
 
   tags = {
     Environment = var.environment

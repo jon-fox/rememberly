@@ -21,83 +21,87 @@ resource "aws_apigatewayv2_api" "mcp" {
   }
 }
 
-# Lambda integration
-resource "aws_apigatewayv2_integration" "lambda" {
+# EC2 integration - direct HTTP proxy to EC2 Elastic IP
+resource "aws_apigatewayv2_integration" "ec2" {
   api_id           = aws_apigatewayv2_api.mcp.id
-  integration_type = "AWS_PROXY"
-  integration_uri  = aws_lambda_function.mcp_server.invoke_arn
-  payload_format_version = "2.0"
+  integration_type = "HTTP_PROXY"
+  integration_uri  = "http://${aws_eip.mcp.public_ip}:8080"
+
+  integration_method = "ANY"
+  connection_type    = "INTERNET"
+
+  payload_format_version = "1.0"
 }
 
 resource "aws_apigatewayv2_route" "mcp_post" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "POST /mcp"
-  
-  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
 }
 
 resource "aws_apigatewayv2_route" "mcp_get" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "GET /mcp"
-  
-  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
 }
 
 resource "aws_apigatewayv2_route" "mcp_proxy" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "ANY /mcp/{proxy+}"
-  
-  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
 }
 
 resource "aws_apigatewayv2_route" "well_known" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "GET /.well-known/{proxy+}"
-  
-  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
 }
 
 # OAuth operational endpoints
 resource "aws_apigatewayv2_route" "oauth_register" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "POST /register"
-  
-  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
 }
 
 resource "aws_apigatewayv2_route" "oauth_authorize" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "GET /authorize"
-  
-  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
 }
 
 resource "aws_apigatewayv2_route" "oauth_token" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "POST /token"
-  
-  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
 }
 
 resource "aws_apigatewayv2_route" "oauth_callback" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "GET /auth/callback"
-  
-  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
 }
 
 resource "aws_apigatewayv2_route" "oauth_consent" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "GET /consent"
-  
-  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
 }
 
 resource "aws_apigatewayv2_route" "oauth_consent_post" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "POST /consent"
-  
-  target = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+
+  target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
 }
 
 # Stage
@@ -126,15 +130,6 @@ resource "aws_apigatewayv2_stage" "prod" {
     Environment = var.environment
     Project     = "rememberly"
   }
-}
-
-# Lambda permission for API Gateway
-resource "aws_lambda_permission" "api_gateway" {
-  statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.mcp_server.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.mcp.execution_arn}/*/*"
 }
 
 # CloudWatch log group for API Gateway

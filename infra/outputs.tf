@@ -62,9 +62,19 @@ output "api_endpoint" {
   value       = "https://${local.api_domain}"
 }
 
-output "mcp_lambda_function_name" {
-  description = "Name of the MCP Lambda function"
-  value       = aws_lambda_function.mcp_server.function_name
+output "mcp_asg_name" {
+  description = "Name of the MCP Auto Scaling Group"
+  value       = aws_autoscaling_group.mcp.name
+}
+
+output "mcp_eip" {
+  description = "Elastic IP for MCP EC2 instance"
+  value       = aws_eip.mcp.public_ip
+}
+
+output "vpc_id" {
+  description = "ID of the default VPC"
+  value       = data.aws_vpc.default.id
 }
 
 # ACM Certificate outputs

@@ -5,7 +5,7 @@ resource "aws_lambda_function" "user_service" {
   function_name = "rememberly-user-service"
   role          = aws_iam_role.user_service.arn
   package_type  = "Image"
-  image_uri     = "${replace(var.mcp_lambda_image_uri, ":latest", ":user-service-latest")}"
+  image_uri     = replace(var.mcp_ec2_image_uri, ":latest", ":user-service-latest")
   timeout       = 30
   memory_size   = 256
 
@@ -95,9 +95,9 @@ resource "aws_iam_role_policy_attachment" "user_service_logs" {
 
 # Lambda integration for user service
 resource "aws_apigatewayv2_integration" "user_service" {
-  api_id           = aws_apigatewayv2_api.mcp.id
-  integration_type = "AWS_PROXY"
-  integration_uri  = aws_lambda_function.user_service.invoke_arn
+  api_id                 = aws_apigatewayv2_api.mcp.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.user_service.invoke_arn
   payload_format_version = "2.0"
 }
 
@@ -106,7 +106,7 @@ resource "aws_apigatewayv2_integration" "user_service" {
 resource "aws_apigatewayv2_route" "user_service_post" {
   api_id    = aws_apigatewayv2_api.mcp.id
   route_key = "POST /users"
-  
+
   target = "integrations/${aws_apigatewayv2_integration.user_service.id}"
 }
 

@@ -175,7 +175,7 @@ def create_http_app():
     return app
 
 
-# Export app for uvicorn (used by Lambda Web Adapter)
+# Export app for uvicorn
 logger.info("[SERVER] ========================================")
 logger.info("[SERVER] Initializing Rememberly MCP Server")
 logger.info("[SERVER] ========================================")

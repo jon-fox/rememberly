@@ -13,9 +13,9 @@ resource "aws_route53_zone" "main" {
 
 # ACM Certificate for CloudFront (must be in us-east-1)
 resource "aws_acm_certificate" "main" {
-  provider          = aws.us_east_1
-  domain_name       = local.domain_name
-  validation_method = "DNS"
+  provider                  = aws.us_east_1
+  domain_name               = local.domain_name
+  validation_method         = "DNS"
   subject_alternative_names = [local.www_domain]
 
   lifecycle {
@@ -108,10 +108,10 @@ resource "aws_route53_record" "www_ipv6" {
 
 # ACM Certificate for API Gateway (covers both mcp and api subdomains)
 resource "aws_acm_certificate" "mcp" {
-  provider          = aws.us_east_1
-  domain_name       = local.mcp_domain
+  provider                  = aws.us_east_1
+  domain_name               = local.mcp_domain
   subject_alternative_names = [local.api_domain]
-  validation_method = "DNS"
+  validation_method         = "DNS"
 
   lifecycle {
     create_before_destroy = true
