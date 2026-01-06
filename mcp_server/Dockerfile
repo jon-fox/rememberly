@@ -31,5 +31,5 @@ ENV HOME=/tmp
 # Override the Lambda entrypoint to run our web app directly
 ENTRYPOINT []
 
-# Start uvicorn directly - Lambda Web Adapter handles the rest
+# Start uvicorn directly with server:app - Lambda Web Adapter handles the rest
 CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
