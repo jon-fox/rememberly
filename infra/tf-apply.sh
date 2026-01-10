@@ -36,4 +36,3 @@ echo "Incremented mcp_image_version from $CURRENT_VERSION to $NEW_VERSION"
 # Run terraform with tfvars file
 cd "$(dirname "$0")"
 terraform apply -var-file="terraform.tfvars" "$@"
-
