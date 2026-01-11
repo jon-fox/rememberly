@@ -197,9 +197,9 @@ resource "aws_autoscaling_group" "mcp" {
   health_check_type         = "EC2"
   health_check_grace_period = 300
 
-  min_size         = 0
-  max_size         = 1
-  desired_capacity = 0
+  min_size         = var.mcp_asg_min_size
+  max_size         = var.mcp_asg_max_size
+  desired_capacity = var.mcp_asg_desired_capacity
 
   launch_template {
     id      = aws_launch_template.mcp.id
@@ -225,31 +225,42 @@ resource "aws_autoscaling_group" "mcp" {
   }
 }
 
-# Attach EIP to instance when it launches
+# Attach EIP to instance when it launches (only if ASG has instances)
 resource "null_resource" "attach_eip" {
+  count = var.mcp_asg_desired_capacity > 0 ? 1 : 0
+
   triggers = {
-    asg_name = aws_autoscaling_group.mcp.name
+    asg_name          = aws_autoscaling_group.mcp.name
+    desired_capacity  = var.mcp_asg_desired_capacity
   }
 
   provisioner "local-exec" {
     command = <<-EOT
-      # Wait for instance and attach EIP
-      while true; do
+      # Wait for instance and attach EIP (timeout after 5 minutes)
+      TIMEOUT=300
+      ELAPSED=0
+      while [ $ELAPSED -lt $TIMEOUT ]; do
         INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups \
           --auto-scaling-group-names ${aws_autoscaling_group.mcp.name} \
           --region ${var.aws_region} \
-          --query 'AutoScalingGroups[0].Instances[0].InstanceId' \
+          --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`].InstanceId | [0]' \
           --output text)
         
-        if [ "$INSTANCE_ID" != "None" ] && [ "$INSTANCE_ID" != "" ]; then
+        if [ "$INSTANCE_ID" != "None" ] && [ "$INSTANCE_ID" != "" ] && [ "$INSTANCE_ID" != "null" ]; then
+          echo "Found instance $INSTANCE_ID, attaching EIP..."
           aws ec2 associate-address \
             --instance-id $INSTANCE_ID \
             --allocation-id ${aws_eip.mcp.id} \
-            --region ${var.aws_region} || true
-          break
+            --region ${var.aws_region} && echo "EIP attached successfully" && break
         fi
         sleep 10
+        ELAPSED=$((ELAPSED + 10))
       done
+      
+      if [ $ELAPSED -ge $TIMEOUT ]; then
+        echo "Timeout waiting for instance to be ready"
+        exit 1
+      fi
     EOT
   }
 }

@@ -28,6 +28,24 @@ variable "mcp_image_version" {
   default     = "1"
 }
 
+variable "mcp_asg_min_size" {
+  description = "Minimum number of instances in MCP Auto Scaling Group"
+  type        = number
+  default     = 0
+}
+
+variable "mcp_asg_max_size" {
+  description = "Maximum number of instances in MCP Auto Scaling Group"
+  type        = number
+  default     = 1
+}
+
+variable "mcp_asg_desired_capacity" {
+  description = "Desired number of instances in MCP Auto Scaling Group"
+  type        = number
+  default     = 0
+}
+
 variable "google_client_id" {
   description = "Google OAuth Client ID for MCP server authentication"
   type        = string

@@ -31,6 +31,10 @@ resource "aws_apigatewayv2_integration" "ec2" {
   connection_type    = "INTERNET"
 
   payload_format_version = "1.0"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_apigatewayv2_route" "mcp_post" {
@@ -38,6 +42,8 @@ resource "aws_apigatewayv2_route" "mcp_post" {
   route_key = "POST /mcp"
 
   target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
+
+  depends_on = [aws_apigatewayv2_integration.ec2]
 }
 
 resource "aws_apigatewayv2_route" "mcp_get" {
@@ -45,6 +51,8 @@ resource "aws_apigatewayv2_route" "mcp_get" {
   route_key = "GET /mcp"
 
   target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
+
+  depends_on = [aws_apigatewayv2_integration.ec2]
 }
 
 resource "aws_apigatewayv2_route" "mcp_proxy" {
@@ -52,6 +60,8 @@ resource "aws_apigatewayv2_route" "mcp_proxy" {
   route_key = "ANY /mcp/{proxy+}"
 
   target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
+
+  depends_on = [aws_apigatewayv2_integration.ec2]
 }
 
 resource "aws_apigatewayv2_route" "well_known" {
@@ -59,6 +69,8 @@ resource "aws_apigatewayv2_route" "well_known" {
   route_key = "GET /.well-known/{proxy+}"
 
   target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
+
+  depends_on = [aws_apigatewayv2_integration.ec2]
 }
 
 # OAuth operational endpoints
@@ -67,6 +79,8 @@ resource "aws_apigatewayv2_route" "oauth_register" {
   route_key = "POST /register"
 
   target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
+
+  depends_on = [aws_apigatewayv2_integration.ec2]
 }
 
 resource "aws_apigatewayv2_route" "oauth_authorize" {
@@ -74,6 +88,8 @@ resource "aws_apigatewayv2_route" "oauth_authorize" {
   route_key = "GET /authorize"
 
   target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
+
+  depends_on = [aws_apigatewayv2_integration.ec2]
 }
 
 resource "aws_apigatewayv2_route" "oauth_token" {
@@ -81,6 +97,8 @@ resource "aws_apigatewayv2_route" "oauth_token" {
   route_key = "POST /token"
 
   target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
+
+  depends_on = [aws_apigatewayv2_integration.ec2]
 }
 
 resource "aws_apigatewayv2_route" "oauth_callback" {
@@ -88,6 +106,8 @@ resource "aws_apigatewayv2_route" "oauth_callback" {
   route_key = "GET /auth/callback"
 
   target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
+
+  depends_on = [aws_apigatewayv2_integration.ec2]
 }
 
 resource "aws_apigatewayv2_route" "oauth_consent" {
@@ -95,6 +115,8 @@ resource "aws_apigatewayv2_route" "oauth_consent" {
   route_key = "GET /consent"
 
   target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
+
+  depends_on = [aws_apigatewayv2_integration.ec2]
 }
 
 resource "aws_apigatewayv2_route" "oauth_consent_post" {
@@ -102,6 +124,8 @@ resource "aws_apigatewayv2_route" "oauth_consent_post" {
   route_key = "POST /consent"
 
   target = "integrations/${aws_apigatewayv2_integration.ec2.id}"
+
+  depends_on = [aws_apigatewayv2_integration.ec2]
 }
 
 # Stage
