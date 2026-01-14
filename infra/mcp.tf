@@ -128,6 +128,9 @@ locals {
     #!/bin/bash
     set -e
     
+    # Ensure SSM agent is running (pre-installed on Amazon Linux 2023)
+    systemctl enable --now amazon-ssm-agent
+    
     # Install Docker
     yum update -y
     yum install -y docker
