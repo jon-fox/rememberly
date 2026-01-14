@@ -84,16 +84,39 @@ jobs:
           ASG_NAME="rememberly-mcp-asg"
           INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups \
             --auto-scaling-group-names $ASG_NAME \
-            --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`].InstanceId | [0]' \
+            --query 'AutoScalingGroups[0].Instances[?HealthStatus==`Healthy`&&LifecycleState==`InService`].InstanceId | [0]' \
             --output text)
           
           if [ "$INSTANCE_ID" == "None" ] || [ -z "$INSTANCE_ID" ]; then
-            echo "No running EC2 instance found in Auto Scaling Group"
+            echo "No healthy running EC2 instance found in Auto Scaling Group"
             exit 1
           fi
           
           echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
           echo "Found EC2 instance: $INSTANCE_ID"
+          
+          # Quick check if SSM is ready
+          echo "Checking SSM agent status..."
+          for i in {1..12}; do
+            SSM_STATUS=$(aws ssm describe-instance-information \
+              --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
+              --query 'InstanceInformationList[0].PingStatus' \
+              --output text 2>/dev/null || echo "Unknown")
+            
+            if [ "$SSM_STATUS" == "Online" ]; then
+              echo "Instance is ready for SSM commands!"
+              break
+            fi
+            
+            if [ $i -eq 12 ]; then
+              echo "Warning: SSM agent not responding. Deployment may fail."
+              echo "SSM Status: $SSM_STATUS"
+              exit 1
+            fi
+            
+            echo "SSM Status: $SSM_STATUS (waiting... $i/12)"
+            sleep 5
+          done
 
       - name: Deploy to EC2
         env:
