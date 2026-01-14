@@ -104,37 +104,39 @@ jobs:
           # Create deployment commands as JSON array
           cat > commands.json << EOF
           {
-            "commands": [
-              "set -e",
-              "export AWS_REGION=$AWS_REGION",
-              "export IMAGE_URI=$IMAGE_URI",
-              "export ECR_REGISTRY=$ECR_REGISTRY",
-              "echo 'Getting environment variables from Parameter Store...'",
-              "export STORAGE_BUCKET=\$(aws ssm get-parameter --name /rememberly/storage_bucket --query Parameter.Value --output text 2>/dev/null || echo '')",
-              "export DYNAMODB_TABLE=\$(aws ssm get-parameter --name /rememberly/dynamodb_table --query Parameter.Value --output text 2>/dev/null || echo '')",
-              "export GOOGLE_CLIENT_ID=\$(aws ssm get-parameter --name /rememberly/google_client_id --with-decryption --query Parameter.Value --output text 2>/dev/null || echo '')",
-              "export GOOGLE_CLIENT_SECRET=\$(aws ssm get-parameter --name /rememberly/google_client_secret --with-decryption --query Parameter.Value --output text 2>/dev/null || echo '')",
-              "export MCP_BASE_URL=\$(aws ssm get-parameter --name /rememberly/mcp_base_url --query Parameter.Value --output text 2>/dev/null || echo '')",
-              "echo 'Logging into ECR...'",
-              "aws ecr get-login-password --region \$AWS_REGION | docker login --username AWS --password-stdin \$ECR_REGISTRY",
-              "echo 'Pulling new image...'",
-              "docker pull \$IMAGE_URI",
-              "echo 'Stopping old container...'",
-              "docker stop rememberly-mcp 2>/dev/null || true",
-              "docker rm rememberly-mcp 2>/dev/null || true",
-              "echo 'Starting new container...'",
-              "docker run -d --name rememberly-mcp --restart unless-stopped -p 8080:8080 -e STORAGE_BUCKET=\$STORAGE_BUCKET -e DYNAMODB_TABLE=\$DYNAMODB_TABLE -e ENVIRONMENT=production -e GOOGLE_CLIENT_ID=\$GOOGLE_CLIENT_ID -e GOOGLE_CLIENT_SECRET=\$GOOGLE_CLIENT_SECRET -e MCP_BASE_URL=\$MCP_BASE_URL -e AWS_DEFAULT_REGION=\$AWS_REGION \$IMAGE_URI",
-              "echo 'Waiting for container to start...'",
-              "sleep 5",
-              "if docker ps | grep -q rememberly-mcp; then echo 'Container deployed successfully!'; docker ps | grep rememberly-mcp; else echo 'Container failed to start!'; docker logs rememberly-mcp; exit 1; fi"
-            ]
+            "InstanceIds": ["$INSTANCE_ID"],
+            "DocumentName": "AWS-RunShellScript",
+            "Parameters": {
+              "commands": [
+                "set -e",
+                "export AWS_REGION=$AWS_REGION",
+                "export IMAGE_URI=$IMAGE_URI",
+                "export ECR_REGISTRY=$ECR_REGISTRY",
+                "echo 'Getting environment variables from Parameter Store...'",
+                "export STORAGE_BUCKET=\$(aws ssm get-parameter --name /rememberly/storage_bucket --query Parameter.Value --output text 2>/dev/null || echo '')",
+                "export DYNAMODB_TABLE=\$(aws ssm get-parameter --name /rememberly/dynamodb_table --query Parameter.Value --output text 2>/dev/null || echo '')",
+                "export GOOGLE_CLIENT_ID=\$(aws ssm get-parameter --name /rememberly/google_client_id --with-decryption --query Parameter.Value --output text 2>/dev/null || echo '')",
+                "export GOOGLE_CLIENT_SECRET=\$(aws ssm get-parameter --name /rememberly/google_client_secret --with-decryption --query Parameter.Value --output text 2>/dev/null || echo '')",
+                "export MCP_BASE_URL=\$(aws ssm get-parameter --name /rememberly/mcp_base_url --query Parameter.Value --output text 2>/dev/null || echo '')",
+                "echo 'Logging into ECR...'",
+                "aws ecr get-login-password --region \$AWS_REGION | docker login --username AWS --password-stdin \$ECR_REGISTRY",
+                "echo 'Pulling new image...'",
+                "docker pull \$IMAGE_URI",
+                "echo 'Stopping old container...'",
+                "docker stop rememberly-mcp 2>/dev/null || true",
+                "docker rm rememberly-mcp 2>/dev/null || true",
+                "echo 'Starting new container...'",
+                "docker run -d --name rememberly-mcp --restart unless-stopped -p 8080:8080 -e STORAGE_BUCKET=\$STORAGE_BUCKET -e DYNAMODB_TABLE=\$DYNAMODB_TABLE -e ENVIRONMENT=production -e GOOGLE_CLIENT_ID=\$GOOGLE_CLIENT_ID -e GOOGLE_CLIENT_SECRET=\$GOOGLE_CLIENT_SECRET -e MCP_BASE_URL=\$MCP_BASE_URL -e AWS_DEFAULT_REGION=\$AWS_REGION \$IMAGE_URI",
+                "echo 'Waiting for container to start...'",
+                "sleep 5",
+                "if docker ps | grep -q rememberly-mcp; then echo 'Container deployed successfully!'; docker ps | grep rememberly-mcp; else echo 'Container failed to start!'; docker logs rememberly-mcp; exit 1; fi"
+              ]
+            }
           }
           EOF
           
           # Send command to EC2 via SSM
           COMMAND_ID=$(aws ssm send-command \
-            --instance-ids $INSTANCE_ID \
-            --document-name "AWS-RunShellScript" \
             --cli-input-json file://commands.json \
             --query 'Command.CommandId' \
             --output text)
