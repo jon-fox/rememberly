@@ -162,6 +162,16 @@ locals {
     
     # Start Caddy
     systemctl enable --now caddy
+    
+    # Configure Caddy as reverse proxy with automatic HTTPS
+    cat > /etc/caddy/Caddyfile << 'CADDY'
+    ${local.mcp_domain} {
+      reverse_proxy localhost:8080
+    }
+    CADDY
+    
+    # Start Caddy
+    systemctl enable --now caddy
     EOF
 }
 
