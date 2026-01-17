@@ -149,17 +149,13 @@ resource "aws_acm_certificate_validation" "mcp" {
   validation_record_fqdns = [for record in aws_route53_record.mcp_cert_validation : record.fqdn]
 }
 
-# Route53 A record for mcp subdomain
+# Route53 A record for mcp subdomain - pointing to EC2 Elastic IP
 resource "aws_route53_record" "mcp" {
   zone_id = aws_route53_zone.main.zone_id
   name    = local.mcp_domain
   type    = "A"
-
-  alias {
-    name                   = aws_apigatewayv2_domain_name.mcp.domain_name_configuration[0].target_domain_name
-    zone_id                = aws_apigatewayv2_domain_name.mcp.domain_name_configuration[0].hosted_zone_id
-    evaluate_target_health = false
-  }
+  ttl     = 300
+  records = [aws_eip.mcp.public_ip]
 }
 
 # Route53 A record for api subdomain (if needed for future use)

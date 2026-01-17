@@ -6,7 +6,25 @@ resource "aws_security_group" "ec2" {
   description = "Security group for MCP EC2 instances"
   vpc_id      = data.aws_vpc.default.id
 
-  # Allow traffic from anywhere on port 8080 (API Gateway has no fixed IPs)
+  # Allow HTTPS traffic for Caddy
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow HTTPS traffic"
+  }
+
+  # Allow HTTP traffic for Let's Encrypt validation
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow HTTP traffic for SSL certificate validation"
+  }
+
+  # Allow traffic on port 8080 for direct access (optional)
   ingress {
     from_port   = 8080
     to_port     = 8080

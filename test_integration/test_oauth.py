@@ -18,7 +18,8 @@ async def test_oauth():
     try:
         # Increase timeout to allow time for manual OAuth login and Lambda warm-up
         async with Client(
-            "https://mcp.rememberly.xyz/mcp",
+            # "https://mcp.rememberly.xyz/mcp",
+            "http://34.207.118.115:8080/mcp",
             auth="oauth",
             init_timeout=300,  # 5 minutes for OAuth flow
             timeout=60,  # 60 seconds for individual requests (Lambda warm-up)

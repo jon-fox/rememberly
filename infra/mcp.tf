@@ -136,7 +136,12 @@ locals {
     yum install -y docker
     systemctl enable --now docker
     
-    # Pull and run container
+    # Install Caddy for automatic HTTPS
+    yum install -y yum-utils
+    yum-config-manager --add-repo https://copr.fedorainfracloud.org/coprs/g/caddy/caddy/repo/epel-9/group_caddy-caddy-epel-9.repo
+    yum install -y caddy
+    
+    # Pull and run container on port 8080
     aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
     docker pull ${var.mcp_ec2_image_uri}
     docker run -d --name rememberly-mcp --restart unless-stopped -p 8080:8080 \
@@ -147,6 +152,16 @@ locals {
       -e GOOGLE_CLIENT_SECRET=${var.google_client_secret} \
       -e MCP_BASE_URL=${var.mcp_base_url} \
       ${var.mcp_ec2_image_uri}
+    
+    # Configure Caddy as reverse proxy with automatic HTTPS
+    cat > /etc/caddy/Caddyfile << 'CADDY'
+    ${local.mcp_domain} {
+      reverse_proxy localhost:8080
+    }
+    CADDY
+    
+    # Start Caddy
+    systemctl enable --now caddy
     EOF
 }
 
