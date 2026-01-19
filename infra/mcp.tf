@@ -88,6 +88,15 @@ resource "aws_iam_role_policy" "mcp_ec2_storage" {
           "ecr:BatchGetImage"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeAddresses",
+          "ec2:AssociateAddress",
+          "ec2:DescribeInstances"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -131,6 +140,11 @@ locals {
     # Ensure SSM agent is running (pre-installed on Amazon Linux 2023)
     systemctl enable --now amazon-ssm-agent
     
+    # Attach Elastic IP
+    INSTANCE_ID=$(ec2-metadata --instance-id | cut -d " " -f 2)
+    EIP_ALLOC_ID=${aws_eip.mcp.id}
+    aws ec2 associate-address --region ${var.aws_region} --instance-id $INSTANCE_ID --allocation-id $EIP_ALLOC_ID --allow-reassociation
+    
     # Install Docker
     yum update -y
     yum install -y docker
@@ -162,12 +176,6 @@ locals {
     
     # Start Caddy
     systemctl enable --now caddy
-    
-    # Configure Caddy as reverse proxy with automatic HTTPS
-    cat > /etc/caddy/Caddyfile << 'CADDY'
-    ${local.mcp_domain} {
-      reverse_proxy localhost:8080
-    }
     CADDY
     
     # Start Caddy
