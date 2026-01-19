@@ -23,6 +23,23 @@ def get_user_id() -> str:
     return token.claims.get("sub")
 
 
+def log_token_info():
+    """Log detailed token information for debugging."""
+    try:
+        token = get_access_token()
+        logger.info(f"[TOKEN] All claims: {token.claims}")
+        logger.info(f"[TOKEN] User ID (sub): {token.claims.get('sub')}")
+        logger.info(f"[TOKEN] Email: {token.claims.get('email')}")
+        logger.info(f"[TOKEN] Name: {token.claims.get('name')}")
+        logger.info(f"[TOKEN] Email verified: {token.claims.get('email_verified')}")
+        logger.info(f"[TOKEN] Issued at: {token.claims.get('iat')}")
+        logger.info(f"[TOKEN] Expires at: {token.claims.get('exp')}")
+        logger.info(f"[TOKEN] Audience: {token.claims.get('aud')}")
+        logger.info(f"[TOKEN] Issuer: {token.claims.get('iss')}")
+    except Exception as e:
+        logger.warning(f"[TOKEN] Could not decode token: {str(e)}")
+
+
 def require_auth(func):
     """Decorator for logging tool execution.
 
@@ -38,6 +55,8 @@ def require_auth(func):
             logger.info(
                 f"Tool call: {func.__name__} | User: {user_email} (ID: {user_id})"
             )
+            # Log full token details
+            log_token_info()
         except Exception as e:
             logger.warning(f"Could not extract user info: {str(e)}")
 
